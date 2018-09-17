@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<!--
+Copyright (C) 2018 Paymentsense Ltd.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+@author      Paymentsense
+@copyright   2018 Paymentsense Ltd.
+@license     https://www.gnu.org/licenses/gpl-3.0.html
+-->
+<config>
+    <modules>
+       <Paymentsense_Payments>
+         <version>1.9.0</version>
+       </Paymentsense_Payments>
+    </modules>
+    <global>
+        <blocks>
+            <paymentsense>
+                <class>Paymentsense_Payments_Block</class>
+            </paymentsense>
+        </blocks>
+        <models>
+            <paymentsense>
+                <class>Paymentsense_Payments_Model</class>
+                <resourceModel>>paymentsense_payments_mysql4</resourceModel>
+            </paymentsense>
+            <paymentsense_payments_mysql4>
+                <class>Paymentsense_Payments_Model_Mysql4</class>
+                <entities>
+                    <quote_payment>
+                        <table>sales_flat_quote_payment</table>
+                    </quote_payment>
+                    <order_payment>
+                        <table>sales_flat_order_payment</table>
+                    </order_payment>
+                </entities>
+            </paymentsense_payments_mysql4>
+        </models>
+        <resources>
+            <paymentsense_payments_setup>
+                <setup>
+                    <module>Paymentsense_Payments</module>
+                </setup>
+                <connection>
+                    <use>core_setup</use>
+                </connection>
+            </paymentsense_payments_setup>
+            <paymentsense_payments_write>
+                <connection>
+                    <use>core_write</use>
+                </connection>
+            </paymentsense_payments_write>
+            <paymentsense_payments_read>
+                <connection>
+                    <use>core_read</use>
+                </connection>
+            </paymentsense_payments_read>
+        </resources>
+        <helpers>
+            <paymentsense>
+                <class>Paymentsense_Payments_Helper</class>
+            </paymentsense>
+        </helpers>
+        <payment>
+            <groups>
+                <paymentsense>Paymentsense</paymentsense>
+            </groups>
+        </payment>
+        <events>
+            <checkout_submit_all_after>
+                <observers>
+                    <Paymentsense_Payments>
+                        <class>Paymentsense_Payments_Observer_CheckoutSubmitAllAfter</class>
+                        <method>handleAction</method>
+                    </Paymentsense_Payments>
+                </observers>
+            </checkout_submit_all_after>
+        </events>
+    </global>
+    <frontend>
+        <routers>
+            <paymentsense>
+                <use>standard</use>
+                <args>
+                    <module>Paymentsense_Payments</module>
+                    <frontName>paymentsense</frontName>
+                </args>
+            </paymentsense>
+        </routers>
+        <secure_url>
+            <paymentsense>/paymentsense/</paymentsense>
+        </secure_url>
+        <translate>
+            <modules>
+                <Paymentsense_Payments>
+                    <files>
+                        <default>Paymentsense_Payments.csv</default>
+                    </files>
+                </Paymentsense_Payments>
+            </modules>
+        </translate>
+    </frontend>
+    <adminhtml>
+        <translate>
+            <modules>
+                <Paymentsense_Payments>
+                    <files>
+                        <default>Paymentsense_Payments.csv</default>
+                    </files>
+                </Paymentsense_Payments>
+            </modules>
+        </translate>
+    </adminhtml>
+    <default>
+        <payment>
+            <paymentsense_hosted>
+                <model>paymentsense/hosted</model>
+                <title>Paymentsense Hosted</title>
+                <hash_method>SHA1</hash_method>
+                <transaction_type>SALE</transaction_type>
+                <payment_action>order</payment_action>
+                <order_status>pending</order_status>
+                <log_level>1</log_level>
+                <group>paymentsense</group>
+            </paymentsense_hosted>
+            <paymentsense_direct>
+                <model>paymentsense/direct</model>
+                <title>Paymentsense Direct</title>
+                <cctypes>AE,VI,MC,SM</cctypes>
+                <transaction_type>SALE</transaction_type>
+                <order_status>processing</order_status>
+                <log_level>1</log_level>
+                <group>paymentsense</group>
+            </paymentsense_direct>
+            <paymentsense_moto>
+                <model>paymentsense/moto</model>
+                <title>Paymentsense MOTO</title>
+                <cctypes>AE,VI,MC,SM</cctypes>
+                <transaction_type>SALE</transaction_type>
+                <order_status>processing</order_status>
+                <log_level>1</log_level>
+                <group>paymentsense</group>
+            </paymentsense_moto>
+         </payment>
+    </default>
+</config>

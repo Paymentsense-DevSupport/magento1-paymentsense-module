@@ -1,0 +1,11 @@
+<config>
+    <modules>
+        <Paymentsense_Payments>
+            <active>true</active>
+            <codePool>community</codePool>
+            <depends>
+                <Mage_Payment />
+            </depends>
+        </Paymentsense_Payments>
+    </modules>
+</config>
