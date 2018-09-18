@@ -32,8 +32,6 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
      * @param Varien_Object $payment
      * @param array $trxData Transaction data
      * @return array
-     *
-     * @throws Varien_Exception
      */
     protected function processReferenceTransaction($payment, $trxData)
     {
@@ -72,9 +70,6 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
      * @param float $amount
      * @param Mage_Sales_Model_Order_Payment_Transaction|false $authTransaction
      * @return $this
-     *
-     * @throws Mage_Core_Exception
-     * @throws Varien_Exception
      */
     protected function performCollection($payment, $amount, $authTransaction)
     {
@@ -116,9 +111,6 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
      * @param float $amount
      * @param Mage_Sales_Model_Order_Payment_Transaction|false $captureTransaction
      * @return $this
-     *
-     * @throws Mage_Core_Exception
-     * @throws Varien_Exception
      */
     protected function performRefund($payment, $amount, $captureTransaction)
     {
@@ -159,9 +151,6 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
      * @param Varien_Object $payment
      * @param Mage_Sales_Model_Order_Payment_Transaction|false $referenceTransaction
      * @return $this
-     *
-     * @throws Mage_Core_Exception
-     * @throws Varien_Exception
      */
     protected function performVoid($payment, $referenceTransaction)
     {
@@ -201,9 +190,6 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
      * @param Varien_Object $payment
      * @param float $amount
      * @return $this
-     *
-     * @throws Varien_Exception
-     * @throws Mage_Core_Exception
      */
     public function refund(Varien_Object $payment, $amount)
     {
@@ -243,9 +229,6 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
      * @param Varien_Object $payment
      * @param float $amount
      * @return $this
-     *
-     * @throws Varien_Exception
-     * @throws Mage_Core_Exception
      */
     public function capture(Varien_Object $payment, $amount)
     {
@@ -281,9 +264,6 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
      *
      * @param Varien_Object $payment
      * @return $this
-     *
-     * @throws Varien_Exception
-     * @throws Mage_Core_Exception
      */
     public function void(Varien_Object $payment)
     {
@@ -303,7 +283,7 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
             }
         } else {
             $errorMessage = 'VOID transaction for order #' . $orderId .
-                ' cannot be finished (No Authorize / Capture Transaction exists)';
+                ' cannot be finished (No Authorize Transaction exists)';
         }
 
         if ($errorMessage !== '') {

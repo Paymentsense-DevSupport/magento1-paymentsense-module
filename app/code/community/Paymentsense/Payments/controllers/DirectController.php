@@ -46,8 +46,6 @@ class Paymentsense_Payments_DirectController extends Mage_Core_Controller_Front_
 
     /**
      * Processes the response from the ACS (Access Control Server)
-     *
-     * @throws Varien_Exception
      */
     public function callbackAction()
     {
@@ -100,7 +98,10 @@ class Paymentsense_Payments_DirectController extends Mage_Core_Controller_Front_
     public function executeFailureAction($message)
     {
         $this->_direct->getLogger()->info('Failure Action with message "' . $message . '" has been triggered.');
-        $this->_helper->restoreQuote();
+        $quote = $this->_helper->restoreQuote();
+        if ($quote) {
+            Mage::helper('checkout')->sendPaymentFailedEmail($quote, $message);
+        }
         $this->_helper->getCheckoutSession()->addError($message);
         $this->_redirect('checkout/cart', array('_secure' => true));
         $this->_direct->getLogger()->info('A redirect to the Checkout Cart has been set.');

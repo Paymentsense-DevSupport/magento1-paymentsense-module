@@ -54,13 +54,12 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
      * @param Varien_Object $payment
      * @param float $amount
      * @return $this
-     *
-     * @throws Varien_Exception
      */
     public function order(Varien_Object $payment, $amount)
     {
         $this->getLogger()->info('ACTION_ORDER has been triggered.');
         $order = $payment->getOrder();
+	    $order->setCanSendNewEmailFlag(false);
         $orderId = $order->getRealOrderId();
         $this->getLogger()->info('New order #' . $orderId . ' with amount ' . $amount . ' has been created.');
         $this->getHelper()->getCheckoutSession()->setPaymentsenseOrderId($orderId);
@@ -104,7 +103,6 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
      *
      * @return array
      *
-     * @throws Varien_Exception
      * @throws Exception
      */
     public function buildHostedFormData()
@@ -232,16 +230,10 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
                     $trxStatus = TransactionStatus::FAILED;
                     break;
             }
-
-            $order = $this->getOrder($postData);
-            if ($order) {
-                $this->getLogger()->info(
-                    'Card details transaction ' . $postData['CrossReference'] .
-                    ' has been performed with status code "' . $postData['StatusCode'] . '".'
-                );
-
-                $this->updatePayment($order, $postData);
-            }
+            $this->getLogger()->info(
+                'Card details transaction ' . $postData['CrossReference'] .
+                ' has been performed with status code "' . $postData['StatusCode'] . '".'
+            );
         } else {
             $this->getLogger()->warning('Callback request with invalid hash digest has been received.');
         }
@@ -257,8 +249,6 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
      *
      * @param array $response An array containing transaction response data from the gateway
      * @return Mage_Sales_Model_Order
-     *
-     * @throws Varien_Exception
      */
     public function getOrder($response)
     {

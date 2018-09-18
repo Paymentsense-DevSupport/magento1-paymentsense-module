@@ -1,4 +1,4 @@
-<?php /** @noinspection ALL */
+<?php
 /*
  * Copyright (C) 2018 Paymentsense Ltd.
  *
@@ -85,10 +85,11 @@ class Paymentsense_Payments_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * Restores the quote
      *
-     * @throws Varien_Exception
+     * @return Mage_Sales_Model_Quote|Mage_Core_Model_Abstract|null
      */
     public function restoreQuote()
     {
+        $quote = null;
         $order = $this->getCheckoutSession()->getLastRealOrder();
         if ($order->getId()) {
             $quoteId = $order->getQuoteId();
@@ -98,14 +99,12 @@ class Paymentsense_Payments_Helper_Data extends Mage_Core_Helper_Abstract
                     $quote->setIsActive(1)
                         ->setReservedOrderId(null)
                         ->save();
-                    /** @noinspection PhpUndefinedMethodInspection */
-                    /** @noinspection PhpUndefinedMethodInspection */
-                    /** @noinspection PhpUndefinedMethodInspection */
                     $this->getCheckoutSession()
                         ->replaceQuote($quote)
                         ->unsLastRealOrderId();
                 }
             }
         }
+        return $quote;
     }
 }

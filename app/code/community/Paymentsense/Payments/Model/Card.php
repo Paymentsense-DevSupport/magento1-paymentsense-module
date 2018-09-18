@@ -46,8 +46,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
      *
      * @param Mage_Sales_Model_Quote|null $quote
      * @return bool
-     *
-     * @throws Mage_Core_Model_Store_Exception
      */
     public function isAvailable($quote = null)
     {
@@ -72,8 +70,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
      *
      * @param mixed $data
      * @return $this
-     *
-     * @throws Varien_Exception
      */
     public function assignData($data)
     {
@@ -95,8 +91,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
      * Builds the data for the form redirecting to the ACS
      *
      * @return array
-     *
-     * @throws Varien_Exception
      */
     public function buildAcsFormData()
     {
@@ -128,8 +122,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
      * Gets the payment action based on the transaction type
      *
      * @return string
-     *
-     * @throws Mage_Core_Exception
      */
     public function getConfigPaymentAction()
     {
@@ -166,7 +158,10 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
     public function authorize(Varien_Object $payment, $amount)
     {
         $this->getLogger()->info('ACTION_AUTHORIZE has been triggered.');
-        $order   = $payment->getOrder();
+        $order = $payment->getOrder();
+        if ($this->_canUseCheckout) {
+            $order->setCanSendNewEmailFlag(false);
+        }
         $orderId = $order->getIncrementId();
         $this->getLogger()->info('Preparing PREAUTH transaction for order #' . $orderId);
         return $this->processInitialTransaction($payment, $amount);
@@ -203,6 +198,9 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
         } else {
             // New order
             $this->getLogger()->info('ACTION_AUTHORIZE_CAPTURE has been triggered.');
+            if ($this->_canUseCheckout) {
+                $order->setCanSendNewEmailFlag(false);
+            }
             $config = $this->getConfigHelper();
             $this->getLogger()->info(
                 'Preparing ' . $config->getTransactionType() . ' transaction for order #' . $orderId
@@ -224,9 +222,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
      * @param Varien_Object $payment
      * @param $amount
      * @return array
-     *
-     * @throws Mage_Core_Exception
-     * @throws Varien_Exception
      */
     protected function buildInitialTransactionData($payment, $amount)
     {
@@ -243,7 +238,7 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
 
         $ccOwner = $payment->getCcOwner();
 
-        $cardName = (!empty($ccOwner))
+        $cardName = !empty($ccOwner)
             ? $ccOwner
             : $billingAddress->getFirstname() . ' ' . $billingAddress->getLastname();
 
@@ -281,9 +276,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
      * @param Varien_Object $payment
      * @param $amount
      * @return $this
-     *
-     * @throws Mage_Core_Exception
-     * @throws Varien_Exception
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
@@ -347,7 +339,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
             }
 
             if ($isTransactionFailed) {
-                $this->getHelper()->getCheckoutSession()->setPaymentsenseCheckoutErrorMessage($errorMessage);
                 Mage::throwException($errorMessage);
             }
 
@@ -362,6 +353,9 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
                 $this->getHelper()->getCheckoutSession()->setPaymentsensePaReq(null);
                 $this->getHelper()->getCheckoutSession()->setPaymentsenseMD(null);
                 $this->setOrderState($order, $status);
+                if ($this->_canUseCheckout && ($status === TransactionResultCode::SUCCESS)) {
+                    $order->queueNewOrderEmail();
+                }
             }
 
             $this->getLogger()->info(
@@ -372,7 +366,6 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
             $logInfo = $transactionType . ' transaction for order #' . $orderId .
                 ' failed with message "' . $e->getMessage() . '"';
             $this->getLogger()->warning($logInfo);
-            $this->getHelper()->getCheckoutSession()->setPaymentsenseCheckoutErrorMessage($e->getMessage());
             Mage::throwException($e->getMessage());
         }
 
@@ -400,17 +393,25 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
                 'PaRES'          => $postData['PaRes'],
             );
             try {
-                $this->getLogger()->info('Preparing 3-D Secure authentication for order #' . $orderId);
-                $psgw                = new Psgw();
-                $response            = $psgw->perform3dsAuthTxn($trxData);
-                $status              = $response['StatusCode'];
-
                 $this->getLogger()->info(
-                    '3-D Secure authentication transaction ' . $response['CrossReference'] .
-                    ' has been performed with status code "' . $response['StatusCode'] . '".'
+                	'Preparing 3-D Secure authentication for order #' . $orderId
                 );
 
-                $isTransactionFailed = ($status !== TransactionResultCode::SUCCESS);
+                $psgw     = new Psgw();
+                $response = $psgw->perform3dsAuthTxn($trxData);
+
+	            $this->getLogger()->info(
+		            '3-D Secure authentication transaction ' . $response['CrossReference'] .
+		            ' has been performed with status code "' . $response['StatusCode'] . '".'
+	            );
+
+	            if ($response['StatusCode'] !== false) {
+		            $status = $response['StatusCode'];
+	            } else {
+		            $response['StatusCode'] = TransactionResultCode::INCOMPLETE;
+	            }
+
+                $isTransactionFailed = $status !== TransactionResultCode::SUCCESS;
                 $payment             = $order->getPayment();
                 $payment
                     ->setTransactionId($response['CrossReference'])
@@ -422,12 +423,13 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
                         ),
                         null
                     );
+
                 if ($isTransactionFailed) {
-                    $message = '3-D Secure Authentication failed. Payment Gateway Message: ' . $response['Message'];
-                    $this->setOrderState($order, $status, $message);
+	                $message = $response['Message'];
+	                $response['Message']= '3-D Secure Authentication failed. Payment Gateway Message: ' .
+                        $response['Message'];
                 } else {
                     $message = '';
-                    $this->setOrderState($order, $status);
                 }
 
                 $response['OrderID']         = $orderId;

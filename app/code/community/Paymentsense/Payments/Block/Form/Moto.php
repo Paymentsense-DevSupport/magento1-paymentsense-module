@@ -42,8 +42,6 @@ class Paymentsense_Payments_Block_Form_Moto extends Mage_Payment_Block_Form
      * Gets credit card types
      *
      * @return array
-     *
-     * @throws Varien_Exception
      */
     public function getCcAvailableTypes()
     {

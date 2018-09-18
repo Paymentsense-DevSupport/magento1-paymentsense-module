@@ -38,8 +38,6 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
 
     /**
      * Redirects to the Hosted Payment Form
-     *
-     * @throws Varien_Exception
      */
     public function redirectAction()
     {
@@ -57,8 +55,6 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
 
     /**
      * Processes the response from the Hosted Payment Form
-     *
-     * @throws Zend_Controller_Exception
      */
     public function callbackAction()
     {
@@ -72,6 +68,14 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
         }
 
         $trxStatusAndMessage = $this->_hosted->getTrxStatusAndMessage($this->getRequest()->getPost());
+
+        if ($trxStatusAndMessage['TrxStatus'] !== TransactionStatus::INVALID) {
+            $order = $this->_hosted->getOrder($this->getRequest()->getPost());
+            if ($order) {
+                $this->_hosted->updatePayment($order, $this->getRequest()->getPost());
+            }
+        }
+
         $this->processActions($trxStatusAndMessage);
         $this->_hosted->getLogger()->info('Callback request from the Hosted Payment Form has been processed.');
     }
@@ -80,8 +84,6 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
      * Processes actions based on the transaction status
      *
      * @param array $trxStatusAndMessage Array containing transaction status and message
-     *
-     * @throws Zend_Controller_Exception
      */
     protected function processActions($trxStatusAndMessage)
     {
@@ -116,7 +118,10 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
     public function executeFailureAction($message)
     {
         $this->_hosted->getLogger()->info('Failure Action with message "' . $message . '" has been triggered.');
-        $this->_helper->restoreQuote();
+        $quote = $this->_helper->restoreQuote();
+        if ($quote) {
+            Mage::helper('checkout')->sendPaymentFailedEmail($quote, $message);
+        }
         $this->_helper->getCheckoutSession()->addError($message);
         $this->_redirect('checkout/cart', array('_secure' => true));
         $this->_hosted->getLogger()->info('A redirect to the Checkout Cart has been set.');

@@ -58,6 +58,10 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+##### 1.9.1
+### Changed
+- Order email queued only after successful payment. Emails for failed payments are no longer sent to the customer.
+
 ##### 1.9.0
 Initial Release
 

@@ -30,8 +30,6 @@ class Paymentsense_Payments_Observer_CheckoutSubmitAllAfter
      *
      * @param Varien_Event_Observer $observer
      * @return $this
-     *
-     * @throws Varien_Exception
      */
     public function handleAction($observer)
     {

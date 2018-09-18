@@ -32,8 +32,6 @@ class Paymentsense_Payments_Block_Redirect_Direct extends Mage_Core_Block_Templa
      * Generates ACS redirect form
      *
      * @return string
-     *
-     * @throws Varien_Exception
      */
     public function generateForm()
     {

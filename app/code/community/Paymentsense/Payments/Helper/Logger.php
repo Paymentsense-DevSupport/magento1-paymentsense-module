@@ -29,8 +29,6 @@ class Paymentsense_Payments_Helper_Logger extends Mage_Core_Helper_Abstract
      * Initialisation
      *
      * @param string $method
-     *
-     * @throws Varien_Exception
      */
     public function init($method)
     {

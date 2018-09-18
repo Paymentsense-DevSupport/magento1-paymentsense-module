@@ -63,6 +63,6 @@ trait Paymentsense_Payments_Model_Traits_CardDetailsTransactions
             $order->queueNewOrderEmail();
         }
 
-        $this->setOrderState($order, $response['StatusCode']);
+        $this->setOrderState($order, $response['StatusCode'], $response['Message']);
     }
 }

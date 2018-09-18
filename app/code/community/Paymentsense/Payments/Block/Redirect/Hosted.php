@@ -32,8 +32,6 @@ class Paymentsense_Payments_Block_Redirect_Hosted extends Mage_Core_Block_Templa
      * Generates Hosted Payment Form redirect form
      *
      * @return string
-     *
-     * @throws Varien_Exception
      */
     public function generateForm()
     {
