@@ -7,7 +7,7 @@ Payment module for Magento 1.9 Community Edition, allowing you to take payments 
 Requirements
 ------------
 
-* Magento Community Edition 1.9 (tested up to 1.9.3.8)
+* Magento Community Edition 1.9 (tested up to 1.9.4.0)
 * PCI-certified server using SSL/TLS (required for Direct and MOTO payment methods)
 
 
@@ -42,6 +42,7 @@ Configuration
 6. Optionally, set the rest of the settings as per your needs
 7. Click the **Save Config** button
 
+
 Secure Checkout
 ---------------
 
@@ -55,15 +56,26 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 6. Set your **Base URL** 
 7. Click the **Save Config** button
 
+
 Changelog
 ---------
+
+##### 1.9.2
+### Added
+- Module information reporting feature
+
+### Removed
+- gw3 gateway entry point
+
 
 ##### 1.9.1
 ### Changed
 - Order email queued only after successful payment. Emails for failed payments are no longer sent to the customer.
 
+
 ##### 1.9.0
 Initial Release
+
 
 Support
 -------

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -217,6 +217,7 @@ class Paymentsense_Payments_Model_Psgw_Psgw
             if (is_string($url)) {
                 $data = array(
                     'url'     => $url,
+                    'method'  => Zend_Http_Client::POST,
                     'headers' => $headers,
                     'xml'     => $xml
                 );
@@ -292,7 +293,8 @@ class Paymentsense_Payments_Model_Psgw_Psgw
                 'timeout' => 10
             )
         );
-        $curl->write(Zend_Http_Client::POST, $data['url'], Zend_Http_Client::HTTP_1, $data['headers'], $data['xml']);
+
+        $curl->write($data['method'], $data['url'], Zend_Http_Client::HTTP_1, $data['headers'], $data['xml']);
         $data = $curl->read();
         if ($data !== false) {
             $data   = preg_split('/^\r?$/m', $data, 2);
