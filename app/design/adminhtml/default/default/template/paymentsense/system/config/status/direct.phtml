@@ -1,0 +1,118 @@
+<?php
+/*
+ * Copyright (C) 2019 Paymentsense Ltd.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * @author      Paymentsense
+ * @copyright   2019 Paymentsense Ltd.
+ * @license     https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
+try {
+    $method            = Mage::getModel('paymentsense/direct');
+    $code              = $method->getCode();
+    $route             = str_replace('_', '/status/', $code);
+    $statusUrl         = $this->getBaseUrl() . $route;
+    $initialStatus     = $method->isEnabled() ? $this->__('Testing...') : $this->__('Disabled');
+    $initialConnection = $method->isEnabled() ? $this->__('Testing...') : $this->__('Unknown');
+    ?>
+  <style type="text/css" >
+    .paymentsense-status-section {
+      padding: 5px;
+    }
+    .paymentsense-status-section .statusDiv {
+      margin-top: 10px;
+      margin-bottom: 0;
+    }
+    .paymentsense-status-section .connectionDiv {
+      margin-top: 0;
+      margin-bottom: 18px;
+    }
+    .paymentsense-status-section .red-text {
+      font-weight: bold;
+      color: #991015;
+    }
+    .paymentsense-status-section .green-text {
+      font-weight: bold;
+      color: #147908;
+    }
+  </style>
+  <div class="paymentsense-status-section">
+      <?php
+
+      $script = '';
+      if ($method->isEnabled()) {
+          $script = "
+    <script>
+      get" . $code . "Status();
+
+      /**
+       * Gets payment method status and connection
+       */
+      function get" . $code . "Status()
+      {
+        new Ajax.Request(
+          '" . $statusUrl . "',
+          {
+            method: 'GET',
+            onSuccess: showStatus,
+            onFailure: showUnknownStatus
+          }
+        );
+      }
+
+      /**
+       * Shows the status and connection
+       */
+      function showStatus(data)
+      {
+        data = JSON.parse(data.responseText);
+        if (data.statusText != null) {
+          var statusSpan = document.getElementById('" . $code . "-status');
+          var connectionSpan = document.getElementById('" . $code . "-connection');
+          statusSpan.innerHTML = data.statusText;
+          statusSpan.className = data.statusClassName;
+          connectionSpan.innerHTML = data.connectionText;
+          connectionSpan.className = data.connectionClassName;
+        } else {
+          showUnknownStatus(data);
+        }
+      }
+      /**
+       * Shows an unknown status and connection
+       */
+      function showUnknownStatus()
+      {
+        var statusSpan = document.getElementById('" . $code . "-status');
+        var connectionSpan = document.getElementById('" . $code . "-connection');
+        statusSpan.innerHTML = '" . $this->__('Unknown') . "';
+        connectionSpan.innerHTML = '" . $this->__('Unknown') . "';
+      }
+    </script>
+    ";
+      }
+
+      echo $script;
+      ?>
+    <div class="statusDiv">
+      <span><?php echo $this->__('Payment Method Status:'); ?> </span>
+      <span id="<?php echo $code; ?>-status"><?php echo $initialStatus; ?></span>
+    </div>
+    <div class="connectionDiv">
+      <span><?php echo $this->__('Gateway Connection:'); ?> </span>
+      <span id="<?php echo $code; ?>-connection"><?php echo $initialConnection; ?></span>
+    </div>
+  </div>
+    <?php
+} catch (\Varien_Exception $e) {
+    //Do nothing
+}

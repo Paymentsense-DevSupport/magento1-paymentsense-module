@@ -26,8 +26,12 @@ use Paymentsense_Payments_Model_Psgw_TransactionStatus as TransactionStatus;
 class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstract
 {
     use Paymentsense_Payments_Model_Traits_BaseMethod;
-    use Paymentsense_Payments_Model_Traits_CardDetailsTransactions;
-    use Paymentsense_Payments_Model_Traits_CrossReferenceTransactions;
+
+    /**
+     * Request Types
+     */
+    const REQ_NOTIFICATION      = '0';
+    const REQ_CUSTOMER_REDIRECT = '1';
 
     protected $_code = 'paymentsense_hosted';
 
@@ -45,6 +49,12 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     protected $_isInitializeNeeded      = false;
     protected $_canUseForMultishipping  = false;
     protected $_canFetchTransactionInfo = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->configureCrossRefTxnAvailability();
+    }
 
     /**
      * Order handler
@@ -145,8 +155,10 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
                         'PostCodeMandatory'         => $config->getPostcodeMandatory(),
                         'StateMandatory'            => $config->getStateMandatory(),
                         'CountryMandatory'          => $config->getCountryMandatory(),
-                        'ResultDeliveryMethod'      => 'POST',
-                        'ServerResultURL'           => '',
+                        'ResultDeliveryMethod'      => $config->getResultDeliveryMethod(),
+                        'ServerResultURL'           => ('SERVER' === $config->getResultDeliveryMethod())
+                        ? $this->getHelper()->getHostedFormCallbackUrl()
+                        : '',
                         'PaymentFormDisplaysResult' => 'false'
                     );
 
@@ -194,29 +206,41 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     }
 
     /**
+     * Gets the Result Delivery Method
+     *
+     * @return string|null
+     */
+    public function getResultDeliveryMethod()
+    {
+        $config = $this->getConfigHelper();
+        return $config->getResultDeliveryMethod();
+    }
+
+    /**
      * Gets the transaction status and message received by the Hosted Payment Form
      *
-     * @param array $postData The POST variables received by the Hosted Payment Form
+     * @param string $requestType Type of the request (notification or customer redirect)
+     * @param array $data POST/GET data received with the request from the payment gateway
      * @return array
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     // phpcs:ignore Generic.Metrics.CyclomaticComplexity
-    public function getTrxStatusAndMessage($postData)
+    public function getTrxStatusAndMessage($requestType, $data)
     {
         $message   = '';
         $trxStatus = TransactionStatus::INVALID;
 
-        if ($this->isHashDigestValid($postData)) {
-            $message = $postData['Message'];
-            switch ($postData['StatusCode']) {
+        if ($this->isHashDigestValid($requestType, $data)) {
+            $message = $data['Message'];
+            switch ($data['StatusCode']) {
                 case TransactionResultCode::SUCCESS:
                     $trxStatus = TransactionStatus::SUCCESS;
                     break;
                 case TransactionResultCode::DUPLICATE:
-                    if (TransactionResultCode::SUCCESS === $postData['PreviousStatusCode']) {
-                        if (array_key_exists('PreviousMessage', $postData)) {
-                            $message = $postData['PreviousMessage'];
+                    if (TransactionResultCode::SUCCESS === $data['PreviousStatusCode']) {
+                        if (array_key_exists('PreviousMessage', $data)) {
+                            $message = $data['PreviousMessage'];
                         }
 
                         $trxStatus = TransactionStatus::SUCCESS;
@@ -230,12 +254,47 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
                     $trxStatus = TransactionStatus::FAILED;
                     break;
             }
+
             $this->getLogger()->info(
-                'Card details transaction ' . $postData['CrossReference'] .
-                ' has been performed with status code "' . $postData['StatusCode'] . '".'
+                'Card details transaction ' . $data['CrossReference'] .
+                ' has been performed with status code "' . $data['StatusCode'] . '".'
             );
         } else {
             $this->getLogger()->warning('Callback request with invalid hash digest has been received.');
+        }
+
+        return array(
+            'TrxStatus' => $trxStatus,
+            'Message'   => $message
+        );
+    }
+
+    /**
+     * Gets the transaction status and message from an Order
+     *
+     * @param array $data POST/GET data received with the request from the payment gateway
+     * @return array
+     */
+    public function loadTrxStatusAndMessage($data)
+    {
+        $trxStatus = TransactionStatus::INVALID;
+        $message   = '';
+
+        if (array_key_exists('OrderID', $data)) {
+            $order = $this->getOrder($data);
+            if ($order) {
+                foreach ($order->getStatusHistoryCollection() as $_item) {
+                    $orderStatus = $_item->getStatus();
+                    $trxStatus =  ($orderStatus === Mage_Sales_Model_Order::STATE_PROCESSING)
+                        ? TransactionStatus::SUCCESS
+                        : TransactionStatus::FAILED;
+                    if ($_item->getComment()) {
+                        $message = $_item->getComment();
+                    }
+
+                    break;
+                }
+            }
         }
 
         return array(
@@ -333,18 +392,19 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     /**
      * Checks whether the hash digest received from the payment gateway is valid
      *
-     * @param array $postData The POST variables received by the Hosted Payment Form
+     * @param string $requestType Type of the request (notification or customer redirect)
+     * @param array $data POST/GET data received with the request from the payment gateway
      * @return bool
      */
-    public function isHashDigestValid($postData)
+    public function isHashDigestValid($requestType, $data)
     {
         $result = false;
-        $data   = $this->buildPostString($postData);
-        if ($data) {
+        $dataString   = $this->buildDataString($requestType, $data);
+        if ($dataString) {
             $config = $this->getConfigHelper();
-            $hashDigestReceived   = $postData['HashDigest'];
+            $hashDigestReceived   = $data['HashDigest'];
             $hashDigestCalculated = $this->calculateHashDigest(
-                $data,
+                $dataString,
                 $config->getHashMethod(),
                 $config->getPresharedKey()
             );
@@ -355,41 +415,53 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     }
 
     /**
-     * Builds a string containing the expected fields from the POST request received from the payment gateway
+     * Builds a string containing the expected fields from the request received from the payment gateway
      *
-     * @param array $postData POST Data
+     * @param string $requestType Type of the request (notification or customer redirect)
+     * @param array $data POST/GET data received with the request from the payment gateway
      * @return bool
      */
-    public function buildPostString($postData)
+    public function buildDataString($requestType, $data)
     {
-        $config = $this->getConfigHelper();
-        $result = 'MerchantID=' . $config->getMerchantId() . '&Password=' . $config->getPassword();
+        $result = false;
         $fields = array(
-            'StatusCode',
-            'Message',
-            'PreviousStatusCode',
-            'PreviousMessage',
-            'CrossReference',
-            'Amount',
-            'CurrencyCode',
-            'OrderID',
-            'TransactionType',
-            'TransactionDateTime',
-            'OrderDescription',
-            'CustomerName',
-            'Address1',
-            'Address2',
-            'Address3',
-            'Address4',
-            'City',
-            'State',
-            'PostCode',
-            'CountryCode',
-            'EmailAddress',
-            'PhoneNumber'
+            // Variables for hash digest calculation for notification requests (excluding configuration variables)
+            self::REQ_NOTIFICATION      => array(
+                'StatusCode',
+                'Message',
+                'PreviousStatusCode',
+                'PreviousMessage',
+                'CrossReference',
+                'Amount',
+                'CurrencyCode',
+                'OrderID',
+                'TransactionType',
+                'TransactionDateTime',
+                'OrderDescription',
+                'CustomerName',
+                'Address1',
+                'Address2',
+                'Address3',
+                'Address4',
+                'City',
+                'State',
+                'PostCode',
+                'CountryCode',
+                'EmailAddress',
+                'PhoneNumber'
+            ),
+            // Variables for hash digest calculation for customer redirects (excluding configuration variables)
+            self::REQ_CUSTOMER_REDIRECT => array(
+                'CrossReference',
+                'OrderID',
+            ),
         );
-        foreach ($fields as $field) {
-            $result .= '&' . $field . '=' . $postData[$field];
+        $config = $this->getConfigHelper();
+        if (array_key_exists($requestType, $fields)) {
+            $result = 'MerchantID=' . $config->getMerchantId() . '&Password=' . $config->getPassword();
+            foreach ($fields[$requestType] as $field) {
+                $result .= '&' . $field . '=' . str_replace('&amp;', '&', $data[$field]);
+            }
         }
 
         return $result;

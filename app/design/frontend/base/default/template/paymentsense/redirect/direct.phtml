@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,50 +13,50 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title><?php echo $this->__('3-D Secure Authentication is required to complete your payment.'); ?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <style>
-        html,body {
-            margin:0;
-            padding:0;
-            width:100%;
-            height:100%;
-            display:table;
-        }
-        .wrapper {
-            text-align:center;
-            display:table-cell;
-            vertical-align:middle;
-        }
-        .notice {
-            padding:16px;
-        }
-    </style>
+  <title><?php echo $this->__('3-D Secure Authentication is required to complete your payment.'); ?></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <style>
+    html,body {
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      display:table;
+    }
+    .wrapper {
+      text-align:center;
+      display:table-cell;
+      vertical-align:middle;
+    }
+    .notice {
+      padding:16px;
+    }
+  </style>
 </head>
 <body>
 <div class="wrapper">
-    <div class="notice">
-        <p>
-            <?php echo $this->__("3-D Secure Authentication is required to complete your payment."); ?>
-        </p>
-    </div>
-    <div class="form">
-        <?php echo $this->generateForm(); ?>
-    </div>
+  <div class="notice">
+    <p>
+        <?php echo $this->__("3-D Secure Authentication is required to complete your payment."); ?>
+    </p>
+  </div>
+  <div class="form">
+      <?php echo $this->generateForm(); ?>
+  </div>
 </div>
 <script type="text/javascript">
-    window.setTimeout(
-        function() {
-            document.getElementById("<?php echo $this->getButtonId(); ?>").click();
-        }, 3000
-    );
+  window.setTimeout(
+    function() {
+      document.getElementById("<?php echo $this->getButtonId(); ?>").click();
+    }, 3000
+  );
 </script>
 </body>
 </html>

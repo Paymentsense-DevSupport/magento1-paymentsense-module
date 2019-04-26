@@ -26,6 +26,21 @@ use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultC
 class Paymentsense_Payments_Model_Psgw_Psgw
 {
     /**
+     * @var int $trxMaxAttempts Number of attempts to perform a transaction
+     */
+    protected $trxMaxAttempts = 3;
+
+    /**
+     * Sets the number of attempts to perform a transaction
+     *
+     * @param int $trxMaxAttempts Number of attempts to perform a transaction
+     */
+    public function setTrxMaxAttempts($trxMaxAttempts)
+    {
+        $this->trxMaxAttempts = $trxMaxAttempts;
+    }
+
+    /**
      * Performs card details transactions (SALE, PREAUTH)
      *
      * @param  array    $trxData The transaction data
@@ -182,6 +197,38 @@ class Paymentsense_Payments_Model_Psgw_Psgw
     }
 
     /**
+     * Performs GetGatewayEntryPoints transaction
+     *
+     * @param  array $trxData The transaction data
+     * @return array
+     */
+    public function performGetGatewayEntryPointsTxn($trxData)
+    {
+        $headers = array(
+            'SOAPAction:https://www.thepaymentgateway.net/GetGatewayEntryPoints',
+            'Content-Type: text/xml; charset=utf-8',
+            'Accept: text/xml, application/xml, */*',
+            'Accept-Encoding: identity',
+            'Connection: close',
+        );
+
+        // @codingStandardsIgnoreStart
+        $xml = '<?xml version="1.0" encoding="utf-8"?>
+                     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                         <soap:Body>
+                             <GetGatewayEntryPoints xmlns="https://www.thepaymentgateway.net/">
+                                 <GetGatewayEntryPointsMessage>
+                                     <MerchantAuthentication MerchantID="' . $trxData['MerchantID'] . '" Password="' . $trxData['Password'] . '" />
+                                 </GetGatewayEntryPointsMessage>
+                             </GetGatewayEntryPoints>
+                         </soap:Body>
+                     </soap:Envelope>';
+        // @codingStandardsIgnoreEnd
+
+        return $this->executeTransaction($headers, $xml);
+    }
+
+    /**
      * Performs transactions to the Paymentsense gateway
      *
      * @param array $headers Request Headers
@@ -193,22 +240,21 @@ class Paymentsense_Payments_Model_Psgw_Psgw
     // phpcs:ignore Generic.Metrics.CyclomaticComplexity
     public function executeTransaction($headers, $xml)
     {
-        $gatewayId             = 1;
-        $trxAttempt            = 0;
-        $trxMaxAttempts        = 3;
-        $validGatewayResponse  = null;
+        $gatewayId            = 1;
+        $trxAttempt           = 0;
+        $validResponse        = false;
+        $trxAttemptsExhausted = false;
 
-        // Initial message. Will be replaced by the gateway message.
+        // Initial message. Will be replaced by the gateway message upon valid response.
         $trxMessage = 'The communication with the Payment Gateway failed. Check outbound connection.';
 
         $trxStatusCode     = false;
         $trxDetail         = false;
         $trxCrossReference = false;
         $responseBody      = '';
-
-        while ($validGatewayResponse === null) {
+        while (!$validResponse && !$trxAttemptsExhausted) {
             $trxAttempt++;
-            if ($trxAttempt > $trxMaxAttempts) {
+            if ($trxAttempt > $this->trxMaxAttempts) {
                 $trxAttempt = 1;
                 $gatewayId++;
             }
@@ -225,17 +271,17 @@ class Paymentsense_Payments_Model_Psgw_Psgw
                 $responseBody = $this->executeHttpRequest($data);
                 if (!empty($responseBody)) {
                     $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
-                    $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
-                    if (!$this->shouldRetryTxn($trxStatusCode, $trxMessage)) {
-                        $validGatewayResponse = is_numeric($trxStatusCode);
+                    if (is_numeric($trxStatusCode)) {
+                        $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
+                        $validResponse = !$this->shouldRetryTxn($trxStatusCode, $trxMessage);
                     }
                 }
             } else {
-                $validGatewayResponse = false;
+                $trxAttemptsExhausted = true;
             }
         };
 
-        if ($validGatewayResponse) {
+        if ($validResponse) {
             $trxMessage        = $this->getXmlValue('Message', $responseBody, '.+');
             $trxDetail         = $this->getXmlValue('Detail', $responseBody, '.+');
             $trxCrossReference = $this->getXmlCrossReference($responseBody);

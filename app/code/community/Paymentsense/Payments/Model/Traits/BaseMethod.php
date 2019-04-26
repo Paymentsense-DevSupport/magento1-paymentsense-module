@@ -24,6 +24,8 @@ use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultC
  */
 trait Paymentsense_Payments_Model_Traits_BaseMethod
 {
+    use Paymentsense_Payments_Model_Traits_Transactions;
+
     protected $_method = null;
     protected $_helper = null;
     protected $_logger = null;
@@ -145,5 +147,37 @@ trait Paymentsense_Payments_Model_Traits_BaseMethod
                 $order->save();
                 break;
         }
+    }
+
+    /**
+     * Determines whether the payment method is configured
+     *
+     * @return bool
+     */
+    public function isEnabled()
+    {
+        return $this->getConfigHelper()->isMethodActive();
+    }
+
+    /**
+     * Determines whether the payment method is configured
+     *
+     * @return bool
+     */
+    public function isConfigured()
+    {
+        return $this->getConfigHelper()->isMethodConfigured();
+    }
+
+    /**
+     * Determines whether the store is secure
+     *
+     * @return bool
+     *
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    public function isSecure()
+    {
+        return Mage::app()->getStore()->isCurrentlySecure();
     }
 }

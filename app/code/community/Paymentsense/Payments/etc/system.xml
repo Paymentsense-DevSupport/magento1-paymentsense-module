@@ -23,13 +23,20 @@ GNU General Public License for more details.
                 <paymentsense_hosted translate="label" module="paymentsense">
                     <label>Paymentsense Hosted</label>
                     <comment>
-                        <![CDATA[Accept credit/debit cards by collecting customer card data on a secure form on the Paymentsense Gateway.<br><br>]]>
+                        <![CDATA[Accept credit/debit cards by collecting customer card data on a secure form on the Paymentsense Gateway.]]>
                     </comment>
-                    <sort_order>0</sort_order>
+                    <sort_order>6</sort_order>
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
                     <fields>
+                        <status_info>
+                            <frontend_model>paymentsense/adminhtml_system_config_status_hosted</frontend_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <sort_order>00</sort_order>
+                        </status_info>
                         <active translate="label">
                             <label>Enabled</label>
                             <frontend_type>select</frontend_type>
@@ -132,6 +139,23 @@ GNU General Public License for more details.
                                 <active>1</active>
                             </depends>
                         </transaction_type>
+                        <result_delivery_method translate="label">
+                            <label>Result Delivery Method</label>
+                            <comment>
+                                <![CDATA[The Server Result Method determines how the transaction results are delivered back to the Magento store.]]>
+                            </comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>paymentsense/admin_options_result_delivery</source_model>
+                            <sort_order>08</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <validate>required-entry</validate>
+                            <can_be_empty>0</can_be_empty>
+                            <depends>
+                                <active>1</active>
+                            </depends>
+                        </result_delivery_method>
                         <order_status translate="label">
                             <label>New Order Status</label>
                             <comment>
@@ -139,7 +163,7 @@ GNU General Public License for more details.
                             </comment>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_order_status_new</source_model>
-                            <sort_order>13</sort_order>
+                            <sort_order>09</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -152,7 +176,7 @@ GNU General Public License for more details.
                         <allowspecific translate="label">
                             <label>Payment from Applicable Countries</label>
                             <frontend_type>allowspecific</frontend_type>
-                            <sort_order>14</sort_order>
+                            <sort_order>10</sort_order>
                             <source_model>adminhtml/system_config_source_payment_allspecificcountries</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -166,7 +190,7 @@ GNU General Public License for more details.
                         <specificcountry translate="label">
                             <label>Payment from Specific Countries</label>
                             <frontend_type>multiselect</frontend_type>
-                            <sort_order>15</sort_order>
+                            <sort_order>11</sort_order>
                             <source_model>adminhtml/system_config_source_country</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -182,7 +206,7 @@ GNU General Public License for more details.
                             <label>Log Level</label>
                             <frontend_type>select</frontend_type>
                             <source_model>paymentsense/admin_options_log_level</source_model>
-                            <sort_order>16</sort_order>
+                            <sort_order>12</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -193,6 +217,21 @@ GNU General Public License for more details.
                                 <active>1</active>
                             </depends>
                         </log_level>
+                        <port_4430_not_open translate="label">
+                            <label>Port 4430 is NOT open on my server (safe mode with cross reference transactions disabled)</label>
+                            <comment>
+                                <![CDATA[Cross reference transactions (COLLECTION, REFUND, VOID) require outbound port 4430 to be open. When port 4430 is not open this setting should be set to "Yes" to disable these transactions.]]>
+                            </comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>13</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends>
+                                <active>1</active>
+                            </depends>
+                        </port_4430_not_open>
                     </fields>
                 </paymentsense_hosted>
                 <paymentsense_direct translate="label" module="paymentsense">
@@ -204,11 +243,18 @@ GNU General Public License for more details.
                         or visit the PCI Security Standards Council webiste at <a href="https://www.pcisecuritystandards.org"
                         target="_blank">https://www.pcisecuritystandards.org</a>.</small><br><br>]]>
                     </comment>
-                    <sort_order>1</sort_order>
+                    <sort_order>7</sort_order>
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
                     <fields>
+                        <status_info>
+                            <frontend_model>paymentsense/adminhtml_system_config_status_direct</frontend_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <sort_order>00</sort_order>
+                        </status_info>
                         <active translate="label">
                             <label>Enabled</label>
                             <frontend_type>select</frontend_type>
@@ -269,7 +315,7 @@ GNU General Public License for more details.
                             </comment>
                             <frontend_type>select</frontend_type>
                             <source_model>paymentsense/admin_options_transaction_type</source_model>
-                            <sort_order>07</sort_order>
+                            <sort_order>05</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -286,7 +332,7 @@ GNU General Public License for more details.
                             </comment>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_order_status_processing</source_model>
-                            <sort_order>14</sort_order>
+                            <sort_order>06</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -299,7 +345,7 @@ GNU General Public License for more details.
                         <allowspecific translate="label">
                             <label>Payment from Applicable Countries</label>
                             <frontend_type>allowspecific</frontend_type>
-                            <sort_order>15</sort_order>
+                            <sort_order>07</sort_order>
                             <source_model>adminhtml/system_config_source_payment_allspecificcountries</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -313,7 +359,7 @@ GNU General Public License for more details.
                         <specificcountry translate="label">
                             <label>Payment from Specific Countries</label>
                             <frontend_type>multiselect</frontend_type>
-                            <sort_order>16</sort_order>
+                            <sort_order>08</sort_order>
                             <source_model>adminhtml/system_config_source_country</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -329,7 +375,7 @@ GNU General Public License for more details.
                             <label>Credit Card Types</label>
                             <frontend_type>multiselect</frontend_type>
                             <source_model>adminhtml/system_config_source_payment_cctype</source_model>
-                            <sort_order>17</sort_order>
+                            <sort_order>09</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -343,7 +389,7 @@ GNU General Public License for more details.
                             <label>Log Level</label>
                             <frontend_type>select</frontend_type>
                             <source_model>paymentsense/admin_options_log_level</source_model>
-                            <sort_order>18</sort_order>
+                            <sort_order>10</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -365,11 +411,18 @@ GNU General Public License for more details.
                         or visit the PCI Security Standards Council webiste at <a href="https://www.pcisecuritystandards.org"
                         target="_blank">https://www.pcisecuritystandards.org</a>.</small><br><br>]]>
                     </comment>
-                    <sort_order>2</sort_order>
+                    <sort_order>8</sort_order>
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
                     <fields>
+                        <status_info>
+                            <frontend_model>paymentsense/adminhtml_system_config_status_moto</frontend_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <sort_order>00</sort_order>
+                        </status_info>
                         <active translate="label">
                             <label>Enabled</label>
                             <frontend_type>select</frontend_type>
@@ -430,7 +483,7 @@ GNU General Public License for more details.
                             </comment>
                             <frontend_type>select</frontend_type>
                             <source_model>paymentsense/admin_options_transaction_type</source_model>
-                            <sort_order>07</sort_order>
+                            <sort_order>05</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -447,7 +500,7 @@ GNU General Public License for more details.
                             </comment>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_order_status_processing</source_model>
-                            <sort_order>14</sort_order>
+                            <sort_order>06</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -460,7 +513,7 @@ GNU General Public License for more details.
                         <allowspecific translate="label">
                             <label>Payment from Applicable Countries</label>
                             <frontend_type>allowspecific</frontend_type>
-                            <sort_order>15</sort_order>
+                            <sort_order>07</sort_order>
                             <source_model>adminhtml/system_config_source_payment_allspecificcountries</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -474,7 +527,7 @@ GNU General Public License for more details.
                         <specificcountry translate="label">
                             <label>Payment from Specific Countries</label>
                             <frontend_type>multiselect</frontend_type>
-                            <sort_order>16</sort_order>
+                            <sort_order>08</sort_order>
                             <source_model>adminhtml/system_config_source_country</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -490,7 +543,7 @@ GNU General Public License for more details.
                             <label>Credit Card Types</label>
                             <frontend_type>multiselect</frontend_type>
                             <source_model>adminhtml/system_config_source_payment_cctype</source_model>
-                            <sort_order>17</sort_order>
+                            <sort_order>09</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -504,7 +557,7 @@ GNU General Public License for more details.
                             <label>Log Level</label>
                             <frontend_type>select</frontend_type>
                             <source_model>paymentsense/admin_options_log_level</source_model>
-                            <sort_order>18</sort_order>
+                            <sort_order>10</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>

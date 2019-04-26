@@ -18,11 +18,20 @@
  */
 
 /**
- * Transaction Status Codes
+ * Result Delivery Method Model Source
  */
-final class Paymentsense_Payments_Model_Psgw_TransactionStatus
+class Paymentsense_Payments_Model_Admin_Options_Result_Delivery
 {
-    const SUCCESS = 0;
-    const FAILED  = 1;
-    const INVALID = 2;
+    /**
+     * Builds the options for the select control in the admin panel
+     *
+     * @return array
+     */
+    public function toOptionArray()
+    {
+        return array(
+            array('value' => 'POST', 'label' => 'POST'),
+            array('value' => 'SERVER', 'label' => 'SERVER')
+        );
+    }
 }

@@ -53,7 +53,7 @@ class Paymentsense_Payments_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Gets the callback URL where the customer will be redirected from the Hosted Payment Form
+     * Gets the Callback URL
      *
      * @return string
      */

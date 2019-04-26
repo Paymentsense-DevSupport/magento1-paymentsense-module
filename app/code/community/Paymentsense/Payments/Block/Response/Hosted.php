@@ -18,11 +18,33 @@
  */
 
 /**
- * Transaction Status Codes
+ * Response block for Paymentsense Hosted
  */
-final class Paymentsense_Payments_Model_Psgw_TransactionStatus
+class Paymentsense_Payments_Block_Response_Hosted extends Mage_Core_Block_Template
 {
-    const SUCCESS = 0;
-    const FAILED  = 1;
-    const INVALID = 2;
+    protected function _construct()
+    {
+        parent::_construct();
+        $this->setTemplate('paymentsense/response/hosted.phtml');
+    }
+
+    /**
+     * Gets the response variable status_code
+     *
+     * @return string
+     */
+    public function getStatusCode()
+    {
+        return $this->getData('status_code');
+    }
+
+    /**
+     * Gets the response variable message
+     *
+     * @return string
+     */
+    public function getMessage()
+    {
+        return $this->getData('message');
+    }
 }

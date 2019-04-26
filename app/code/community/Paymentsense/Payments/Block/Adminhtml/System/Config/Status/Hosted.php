@@ -18,11 +18,15 @@
  */
 
 /**
- * Transaction Status Codes
+ * Status block for Paymentsense Hosted
  */
-final class Paymentsense_Payments_Model_Psgw_TransactionStatus
+class Paymentsense_Payments_Block_Adminhtml_System_Config_Status_Hosted
+    extends Paymentsense_Payments_Block_Adminhtml_System_Config_Status_Base
 {
-    const SUCCESS = 0;
-    const FAILED  = 1;
-    const INVALID = 2;
+    /**
+     * Template path
+     *
+     * @var string
+     */
+    protected $_template = 'paymentsense/system/config/status/hosted.phtml';
 }

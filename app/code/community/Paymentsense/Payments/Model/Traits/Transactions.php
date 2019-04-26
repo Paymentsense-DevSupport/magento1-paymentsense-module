@@ -24,7 +24,7 @@ use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultC
 /**
  * Trait for processing of Cross Reference Transactions
  */
-trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
+trait Paymentsense_Payments_Model_Traits_Transactions
 {
     /**
      * Performs a Reference Transaction (COLLECTION, REFUND, REFUND)
@@ -303,5 +303,85 @@ trait Paymentsense_Payments_Model_Traits_CrossReferenceTransactions
     public function cancel(Varien_Object $payment)
     {
         return $this->void($payment);
+    }
+
+    /**
+     * Updates payment info and registers Card Details Transactions
+     *
+     * @param Mage_Sales_Model_Order
+     * @param array $response An array containing transaction response data from the gateway
+     */
+    public function updatePayment($order, $response)
+    {
+        $transactionID = $response['CrossReference'];
+        $payment = $order->getPayment();
+        $lastTransactionId = $payment->getLastTransId();
+        $config = $this->getConfigHelper();
+        $transactionType = $config->getTransactionType();
+        $payment
+            ->setTransactionId($transactionID)
+            ->setParentTransactionId($lastTransactionId)
+            ->setShouldCloseParentTransaction(true)
+            ->setIsTransactionPending(false)
+            ->setIsTransactionClosed(
+                ($response['StatusCode'] !== TransactionResultCode::SUCCESS) ||
+                ($transactionType !== TransactionType::PREAUTH)
+            )
+            ->setTransactionAdditionalInfo(
+                array(
+                    Mage_Sales_Model_Order_Payment_Transaction::RAW_DETAILS => $response
+                ),
+                null
+            );
+        if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
+            if ($transactionType === TransactionType::SALE) {
+                $payment->registerCaptureNotification($response['Amount'] / 100);
+            } else {
+                $payment->registerAuthorizationNotification($response['Amount'] / 100);
+            }
+
+            $order->queueNewOrderEmail();
+        }
+
+        $this->setOrderState($order, $response['StatusCode'], $response['Message']);
+    }
+
+    /**
+     * Performs GetGatewayEntryPoints transaction
+     *
+     * @return array
+     */
+    public function performGetGatewayEntryPointsTxn()
+    {
+        $config  = $this->getConfigHelper();
+        $trxData = array(
+            'MerchantID' => $config->getMerchantId(),
+            'Password'   => $config->getPassword(),
+        );
+
+        $psgw = new Psgw();
+        $psgw->setTrxMaxAttempts(1);
+        return $psgw->performGetGatewayEntryPointsTxn($trxData);
+    }
+
+    /**
+     * Checks whether the plugin can connect to the gateway by performing GetGatewayEntryPoints transaction
+     *
+     * @return boolean
+     */
+    public function canConnect()
+    {
+        $response = $this->performGetGatewayEntryPointsTxn();
+        return false !== $response['StatusCode'];
+    }
+
+    /**
+     * Configures the availability of the cross reference transactions (COLLECTION, REFUND, VOID)
+     * based on the configuration setting "Port 4430 is NOT open on my server"
+     */
+    public function configureCrossRefTxnAvailability()
+    {
+        $port4430IsNotOpen = (bool) $this->getConfigHelper()->getPort4430NotOpen();
+        $this->_canCapture = $this->_canRefund = $this->_canVoid = ! $port4430IsNotOpen;
     }
 }

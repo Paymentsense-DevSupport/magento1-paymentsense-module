@@ -27,8 +27,6 @@ use Paymentsense_Payments_Model_Psgw_TransactionType as TransactionType;
 abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Method_Cc
 {
     use Paymentsense_Payments_Model_Traits_BaseMethod;
-    use Paymentsense_Payments_Model_Traits_CardDetailsTransactions;
-    use Paymentsense_Payments_Model_Traits_CrossReferenceTransactions;
 
     protected $_code;
     protected $_isGateway               = true;
@@ -201,6 +199,7 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
             if ($this->_canUseCheckout) {
                 $order->setCanSendNewEmailFlag(false);
             }
+
             $config = $this->getConfigHelper();
             $this->getLogger()->info(
                 'Preparing ' . $config->getTransactionType() . ' transaction for order #' . $orderId
@@ -322,11 +321,11 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
                         } else {
                             $isTransactionFailed = true;
                             $errorMessage = $this->getHelper()->__(
-                                    'Please ensure you are using a Paymentsense MOTO account for MOTO '
-                                ) .
-                                $this->getHelper()->__(
-                                    'transactions (this will have a different merchant id to your ECOM account).'
-                                );
+                                'Please ensure you are using a Paymentsense MOTO account for MOTO '
+                            ) .
+                            $this->getHelper()->__(
+                                'transactions (this will have a different merchant id to your ECOM account).'
+                            );
                         }
                         break;
                     default:
@@ -394,22 +393,22 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
             );
             try {
                 $this->getLogger()->info(
-                	'Preparing 3-D Secure authentication for order #' . $orderId
+                    'Preparing 3-D Secure authentication for order #' . $orderId
                 );
 
                 $psgw     = new Psgw();
                 $response = $psgw->perform3dsAuthTxn($trxData);
 
-	            $this->getLogger()->info(
-		            '3-D Secure authentication transaction ' . $response['CrossReference'] .
-		            ' has been performed with status code "' . $response['StatusCode'] . '".'
-	            );
+                $this->getLogger()->info(
+                    '3-D Secure authentication transaction ' . $response['CrossReference'] .
+                    ' has been performed with status code "' . $response['StatusCode'] . '".'
+                );
 
-	            if ($response['StatusCode'] !== false) {
-		            $status = $response['StatusCode'];
-	            } else {
-		            $response['StatusCode'] = TransactionResultCode::INCOMPLETE;
-	            }
+                if ($response['StatusCode'] !== false) {
+                    $status = $response['StatusCode'];
+                } else {
+                    $response['StatusCode'] = TransactionResultCode::INCOMPLETE;
+                }
 
                 $isTransactionFailed = $status !== TransactionResultCode::SUCCESS;
                 $payment             = $order->getPayment();
@@ -425,8 +424,8 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
                     );
 
                 if ($isTransactionFailed) {
-	                $message = $response['Message'];
-	                $response['Message']= '3-D Secure Authentication failed. Payment Gateway Message: ' .
+                    $message = $response['Message'];
+                    $response['Message']= '3-D Secure Authentication failed. Payment Gateway Message: ' .
                         $response['Message'];
                 } else {
                     $message = '';

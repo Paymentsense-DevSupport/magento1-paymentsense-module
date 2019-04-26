@@ -60,20 +60,31 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
-##### 1.9.2
-### Added
+### 1.9.3 (1.9.3001)
+##### Added
+- SERVER result delivery method (Paymentsense Hosted)
+- Payment method status and gateway connection status on the payment methods settings pages
+- Gateway connection status on the module information report
+- Ability to disable the communication on port 4430 (Paymentsense Hosted)
+
+##### Fixed
+- Switching to the next gateway entry point when an unexpected response from the gateway is received
+
+
+### 1.9.2
+##### Added
 - Module information reporting feature
 
-### Removed
+##### Removed
 - gw3 gateway entry point
 
 
-##### 1.9.1
-### Changed
+### 1.9.1
+##### Changed
 - Order email queued only after successful payment. Emails for failed payments are no longer sent to the customer.
 
 
-##### 1.9.0
+### 1.9.0
 Initial Release
 
 

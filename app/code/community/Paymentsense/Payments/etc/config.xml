@@ -19,7 +19,7 @@ GNU General Public License for more details.
 <config>
     <modules>
        <Paymentsense_Payments>
-         <version>1.9.2</version>
+         <version>1.9.3</version>
        </Paymentsense_Payments>
     </modules>
     <global>
@@ -127,9 +127,11 @@ GNU General Public License for more details.
                 <title>Paymentsense Hosted</title>
                 <hash_method>SHA1</hash_method>
                 <transaction_type>SALE</transaction_type>
+                <result_delivery_method>POST</result_delivery_method>
                 <payment_action>order</payment_action>
                 <order_status>pending</order_status>
                 <log_level>1</log_level>
+                <port_4430_not_open>0</port_4430_not_open>
                 <group>paymentsense</group>
             </paymentsense_hosted>
             <paymentsense_direct>

@@ -16,13 +16,4 @@
  * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
-
-/**
- * Transaction Status Codes
- */
-final class Paymentsense_Payments_Model_Psgw_TransactionStatus
-{
-    const SUCCESS = 0;
-    const FAILED  = 1;
-    const INVALID = 2;
-}
+?>StatusCode=<?php echo $this->getStatusCode(); ?>&Message=<?php echo $this->getMessage(); ?>

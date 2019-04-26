@@ -18,6 +18,7 @@
  */
 
 use Paymentsense_Payments_Model_Psgw_Psgw as Psgw;
+use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultCode;
 
 /**
  * Paymentsense Info Model
@@ -43,6 +44,7 @@ class Paymentsense_Payments_Model_Info
                 'Module Latest Version' => $this->getModuleLatestVersion(),
                 'Magento Version'       => $this->getMagentoVersion(),
                 'PHP Version'           => $this->getPHPVersion(),
+                'Connectivity'          => $this->getConnectivityStatus(),
             );
             $info = array_merge($info, $extendedInfo);
         }
@@ -127,5 +129,33 @@ class Paymentsense_Payments_Model_Info
     protected function getPHPVersion()
     {
         return phpversion();
+    }
+
+    /**
+     * Gets the gateway connectivity status
+     *
+     * @return string
+     */
+    protected function getConnectivityStatus()
+    {
+        $model  = 'paymentsense/direct';
+        $method = Mage::getModel($model);
+        if (is_object($method)) {
+            try {
+                $response = $method->performGetGatewayEntryPointsTxn();
+                if (TransactionResultCode::SUCCESS === $response['StatusCode']) {
+                    $result = 'Successful';
+                } else {
+                    $result = $response['Message'];
+                }
+            } catch (\Varien_Exception $e) {
+                $errorMsg = $e->getMessage();
+                $result   = 'An error occurred while performing GetGatewayEntryPoints transaction: ' . $errorMsg;
+            }
+        } else {
+            $result = "Error instantiating $model model";
+        }
+
+        return $result;
     }
 }

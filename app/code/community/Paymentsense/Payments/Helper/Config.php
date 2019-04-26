@@ -179,6 +179,16 @@ class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
     }
 
     /**
+     * Gets Result Delivery Method
+     *
+     * @return string|null
+     */
+    public function getResultDeliveryMethod()
+    {
+        return $this->getConfigData('result_delivery_method');
+    }
+
+    /**
      * Gets Email Address Editable
      *
      * @return string
@@ -266,5 +276,15 @@ class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
     public function getLogLevel()
     {
         return (int) $this->getConfigData('log_level');
+    }
+
+    /**
+     * Gets Port 4430 is NOT open on my server
+     *
+     * @return string
+     */
+    public function getPort4430NotOpen()
+    {
+        return $this->getConfigData('port_4430_not_open');
     }
 }
