@@ -22,30 +22,15 @@
  */
 class Paymentsense_Payments_StatusController extends Mage_Core_Controller_Front_Action
 {
+    protected $_method = null;
+
     /**
      * Handles the request for status for Paymentsense Hosted
      */
     public function HostedAction()
     {
-        $method = Mage::getModel('paymentsense/hosted');
-        switch (true) {
-            case !$method->isConfigured():
-                $statusInfo = array(
-                    'statusText' => __('Unavailable (Payment method not configured)'),
-                    'statusClassName' => 'red-text'
-                );
-                break;
-            default:
-                $statusInfo = array(
-                    'statusText' => __('Enabled'),
-                    'statusClassName' => 'green-text'
-                );
-                break;
-        }
-
-        $connectionInfo = $this->getConnection();
-        $info = array_merge($statusInfo, $connectionInfo);
-        $this->outputInfo($info);
+        $this->_method = Mage::getModel('paymentsense/hosted');
+        $this->ProcessStatusRequest();
     }
 
     /**
@@ -53,31 +38,8 @@ class Paymentsense_Payments_StatusController extends Mage_Core_Controller_Front_
      */
     public function DirectAction()
     {
-        $method = Mage::getModel('paymentsense/direct');
-        switch (true) {
-            case !$method->isConfigured():
-                $statusInfo = array(
-                    'statusText' => __('Unavailable (Payment method not configured)'),
-                    'statusClassName' => 'red-text'
-                );
-                break;
-            case !$method->isSecure():
-                $statusInfo = array(
-                    'statusText' => __('Unavailable (SSL/TLS not configured)'),
-                    'statusClassName' => 'red-text'
-                );
-                break;
-            default:
-                $statusInfo = array(
-                    'statusText' => __('Enabled'),
-                    'statusClassName' => 'green-text'
-                );
-                break;
-        }
-
-        $connectionInfo = $this->getConnection();
-        $info = array_merge($statusInfo, $connectionInfo);
-        $this->outputInfo($info);
+        $this->_method = Mage::getModel('paymentsense/direct');
+        $this->ProcessStatusRequest();
     }
 
     /**
@@ -85,49 +47,78 @@ class Paymentsense_Payments_StatusController extends Mage_Core_Controller_Front_
      */
     public function MotoAction()
     {
-        $method = Mage::getModel('paymentsense/moto');
-        switch (true) {
-            case !$method->isConfigured():
-                $statusInfo = array(
-                    'statusText' => __('Unavailable (Payment method not configured)'),
-                    'statusClassName' => 'red-text'
-                );
-                break;
-            case !$method->isSecure():
-                $statusInfo = array(
-                    'statusText' => __('Unavailable (SSL/TLS not configured)'),
-                    'statusClassName' => 'red-text'
-                );
-                break;
-            default:
-                $statusInfo = array(
-                    'statusText' => __('Enabled'),
-                    'statusClassName' => 'green-text'
-                );
-                break;
-        }
-
-        $connectionInfo = $this->getConnection();
-        $info = array_merge($statusInfo, $connectionInfo);
-        $this->outputInfo($info);
+        $this->_method = Mage::getModel('paymentsense/moto');
+        $this->ProcessStatusRequest();
     }
 
     /**
-     * Gets the gateway connection status
+     * Processes the request for status
      */
-    protected function getConnection()
+    protected function ProcessStatusRequest()
     {
-        $method               = Mage::getModel('paymentsense/direct');
-        $connectionSuccessful = $method->canConnect();
-        if ($connectionSuccessful) {
-            $result = array(
-                'connectionText' => __('Successful'),
-                'connectionClassName' => 'green-text'
-            );
-        } else {
-            $result = array(
-                'connectionText' => __('Unavailable (No Connection to the gateway. Please check outbound port 4430).'),
-                'connectionClassName' => 'red-text'
+        $this->outputInfo($this->getMessages());
+    }
+
+    /**
+     * Gets the messages
+     *
+     * @return array
+     */
+    protected function getMessages()
+    {
+        $result = $this->getStatusMessage();
+        $result = array_merge($result, $this->getConnectionMessage());
+        $result = array_merge($result, $this->getSettingsMessage());
+        $result = array_merge($result, $this->getSystemTimeMessage());
+        return $result;
+    }
+
+    /**
+     * Gets the payment method status message
+     *
+     * @return array
+     */
+    protected function getStatusMessage()
+    {
+        return $this->_method->getMessageHelper()->getStatusMessage(
+            $this->_method->isConfigured(),
+            $this->_method instanceof Paymentsense_Payments_Model_Hosted || $this->_method->isSecure()
+        );
+    }
+
+    /**
+     * Gets the gateway connection status message
+     *
+     * @return array
+     */
+    protected function getConnectionMessage()
+    {
+        $connectionSuccessful = $this->_method->canConnect();
+        return $this->_method->getMessageHelper()->getConnectionMessage($connectionSuccessful);
+    }
+
+    /**
+     * Gets the settings message
+     *
+     * @return array
+     */
+    protected function getSettingsMessage()
+    {
+        return $this->_method->getSettingsMessage(false);
+    }
+
+    /**
+     * Gets the system time message if the time difference exceeds the threshold
+     *
+     * @return array
+     */
+    protected function getSystemTimeMessage()
+    {
+        $result   = array();
+        $timeDiff = $this->_method->getSystemTimeDiff();
+        if (is_numeric($timeDiff) && (abs($timeDiff) > $this->_method->getSystemTimeThreshold())) {
+            $result = $this->_method->getMessageHelper()->buildErrorSystemTimeMessage(
+                $timeDiff
             );
         }
 

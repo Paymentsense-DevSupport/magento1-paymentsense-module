@@ -22,6 +22,11 @@
  */
 class Paymentsense_Payments_DirectController extends Mage_Core_Controller_Front_Action
 {
+    /**
+     * Payment method model
+     */
+    const MODEL = 'paymentsense/direct';
+
     /** @var $_direct Paymentsense_Payments_Model_Direct */
     protected $_direct;
 
@@ -30,8 +35,25 @@ class Paymentsense_Payments_DirectController extends Mage_Core_Controller_Front_
 
     protected function _construct()
     {
-        $this->_direct = Mage::getModel('paymentsense/direct');
+        $this->_direct = Mage::getModel(self::MODEL);
         $this->_helper = Mage::helper('paymentsense');
+    }
+
+    /**
+     * Shows the module information report
+     *
+     * @throws Varien_Exception
+     */
+    public function infoAction()
+    {
+        $infoModel = Mage::getModel('paymentsense/info');
+        $info = $infoModel->getFormattedModuleInfo(self::MODEL);
+        $this->getResponse()
+            ->clearHeaders()
+            ->setHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store', true)
+            ->setHeader('Pragma', 'no-cache', true)
+            ->setHeader('Content-Type', $info['content-type'])
+            ->setBody($info['body']);
     }
 
     /**

@@ -23,10 +23,12 @@
  */
 class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
 {
+    const MODULE_NAME = 'Paymentsense Module for Magento 1 Open Source';
+
     protected $_method = null;
 
     /**
-     * Initialises the the payment model method
+     * Initialises the payment model method
      *
      * @param string $method
      */
@@ -41,6 +43,37 @@ class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
                 )
             );
         }
+    }
+
+    /**
+     * Gets module name
+     *
+     * @return string
+     */
+    public function getModuleName()
+    {
+        return self::MODULE_NAME;
+    }
+
+    /**
+     * Gets module installed version
+     *
+     * @return string
+     */
+    public function getModuleInstalledVersion()
+    {
+        return Mage::getConfig()->getNode('modules/Paymentsense_Payments/version');
+    }
+
+    /**
+     * Gets module HTTP user agent
+     * Used for performing cURL requests
+     *
+     * @return string
+     */
+    public function getUserAgent()
+    {
+        return $this->getModuleName() . ' v.' . $this->getModuleInstalledVersion();
     }
 
     /**
@@ -97,7 +130,7 @@ class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
     public function isMethodActive()
     {
         $result = (bool) $this->getConfigData('active');
-        if (!$result) {
+        if (! $result) {
             $this->_method->getLogger()->info('Payment method is not active.');
         }
 
@@ -121,7 +154,7 @@ class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
 		    !empty($transactionType) &&
 		    ($this->_method instanceof Paymentsense_Payments_Model_Card || !empty($presharedKey));
 
-        if (!$result) {
+        if (! $result) {
             $this->_method->getLogger()->info('Payment method is not configured.');
         }
 

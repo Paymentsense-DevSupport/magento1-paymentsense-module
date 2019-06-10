@@ -25,32 +25,23 @@ use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultC
  */
 class Paymentsense_Payments_Model_Info
 {
-    const MODULE_NAME = 'Paymentsense Module for Magento 1 Open Source';
+    const TYPE_APPLICATION_JSON = 'application/json';
+    const TYPE_TEXT_PLAIN       = 'text/plain';
 
     /**
-     * Gets module information
+     * Supported content types of the output of the module information
      *
-     * @return array
+     * @var array
      */
-    public function getInfo()
-    {
-        $info = array(
-            'Module Name'              => $this->getModuleName(),
-            'Module Installed Version' => $this->getModuleInstalledVersion(),
-        );
+    protected $_contentTypes = array(
+        'json' => self::TYPE_APPLICATION_JSON,
+        'text' => self::TYPE_TEXT_PLAIN
+    );
 
-        if ('true' === Mage::app()->getRequest()->getParam('extended_info')) {
-            $extendedInfo = array(
-                'Module Latest Version' => $this->getModuleLatestVersion(),
-                'Magento Version'       => $this->getMagentoVersion(),
-                'PHP Version'           => $this->getPHPVersion(),
-                'Connectivity'          => $this->getConnectivityStatus(),
-            );
-            $info = array_merge($info, $extendedInfo);
-        }
-
-        return $info;
-    }
+    /**
+     * @var Paymentsense_Payments_Model_Hosted|Paymentsense_Payments_Model_Direct|Paymentsense_Payments_Model_Moto
+     */
+    protected $_method;
 
     /**
      * Gets module name
@@ -59,7 +50,18 @@ class Paymentsense_Payments_Model_Info
      */
     protected function getModuleName()
     {
-        return self::MODULE_NAME;
+        return $this->_method->getConfigHelper()->getModuleName();
+    }
+
+    /**
+     * Gets module HTTP user agent
+     * Used for performing cURL requests
+     *
+     * @return string
+     */
+    protected function getUserAgent()
+    {
+        return $this->_method->getConfigHelper()->getUserAgent();
     }
 
     /**
@@ -69,7 +71,7 @@ class Paymentsense_Payments_Model_Info
      */
     protected function getModuleInstalledVersion()
     {
-       return Mage::getConfig()->getNode('modules/Paymentsense_Payments/version');
+        return $this->_method->getConfigHelper()->getModuleInstalledVersion();
     }
 
     /**
@@ -77,13 +79,13 @@ class Paymentsense_Payments_Model_Info
      *
      * @return string
      */
-    protected function getModuleLatestVersion()
+    public function getModuleLatestVersion()
     {
         $result = 'N/A';
         $psgw = new Psgw();
 
         $headers = array(
-            'User-Agent: ' . $this->getModuleName() . ' v.' . $this->getModuleInstalledVersion(),
+            'User-Agent: ' . $this->getUserAgent(),
             'Content-Type: text/plain; charset=utf-8',
             'Accept: text/plain, */*',
             'Accept-Encoding: identity',
@@ -99,9 +101,9 @@ class Paymentsense_Payments_Model_Info
         );
 
         $response = $psgw->executeHttpRequest($data);
-        if ($response) {
+        if (is_array($response)) {
             // @codingStandardsIgnoreLine
-            $jsonObject = @json_decode($response);
+            $jsonObject = @json_decode($response[1]);
             if (is_object($jsonObject) && property_exists($jsonObject, 'tag_name')) {
                 // @codingStandardsIgnoreLine
                 $result = $jsonObject->tag_name;
@@ -116,7 +118,7 @@ class Paymentsense_Payments_Model_Info
      *
      * @return string
      */
-    protected function getMagentoVersion()
+    public function getMagentoVersion()
     {
         return Mage::getVersion();
     }
@@ -126,7 +128,7 @@ class Paymentsense_Payments_Model_Info
      *
      * @return string
      */
-    protected function getPHPVersion()
+    public function getPHPVersion()
     {
         return phpversion();
     }
@@ -136,24 +138,135 @@ class Paymentsense_Payments_Model_Info
      *
      * @return string
      */
-    protected function getConnectivityStatus()
+    public function getConnectivityStatus()
     {
-        $model  = 'paymentsense/direct';
-        $method = Mage::getModel($model);
-        if (is_object($method)) {
-            try {
-                $response = $method->performGetGatewayEntryPointsTxn();
-                if (TransactionResultCode::SUCCESS === $response['StatusCode']) {
-                    $result = 'Successful';
-                } else {
-                    $result = $response['Message'];
-                }
-            } catch (\Varien_Exception $e) {
-                $errorMsg = $e->getMessage();
-                $result   = 'An error occurred while performing GetGatewayEntryPoints transaction: ' . $errorMsg;
+        try {
+            $response = $this->_method->performGetGatewayEntryPointsTxn();
+            if (TransactionResultCode::SUCCESS === $response['StatusCode']) {
+                $result = 'Successful';
+            } elseif (is_numeric($response['StatusCode'])) {
+                $result = sprintf(
+                    'Successful with error (StatusCode:%1$s, Message:%2$s)',
+                    $response['StatusCode'],
+                    $response['Message']
+                );
+            } else {
+                $result = 'Unsuccessful';
             }
-        } else {
-            $result = "Error instantiating $model model";
+        } catch (\Varien_Exception $e) {
+            $errorMsg = $e->getMessage();
+            $result   = 'An error occurred while performing GetGatewayEntryPoints transaction: ' . $errorMsg;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Gets formatted module information
+     *
+     * @param string $model Payment method model
+     * @return array
+     */
+    public function getFormattedModuleInfo($model)
+    {
+        $info = $this->getModuleInfo($model);
+        return $this->formatModuleInfo($info);
+    }
+
+    /**
+     * Gets module information
+     *
+     * @param string $model Payment method model
+     * @return array
+     */
+    public function getModuleInfo($model)
+    {
+        try {
+            $this->_method = Mage::getModel($model);
+            if (is_object($this->_method)) {
+                $result   = array(
+                    'Module Name'              => $this->getModuleName(),
+                    'Module Installed Version' => $this->getModuleInstalledVersion(),
+                );
+
+                if ('true' === Mage::app()->getRequest()->getParam('extended_info')) {
+                    $settingsMessage  = $this->_method->getSettingsMessage(true);
+                    $systemTimeStatus = $this->_method->getSystemTimeStatus();
+                    $extendedInfo     = array(
+                        'Module Latest Version'     => $this->getModuleLatestVersion(),
+                        'Magento Version'           => $this->getMagentoVersion(),
+                        'PHP Version'               => $this->getPHPVersion(),
+                        'Connectivity on port 4430' => $this->getConnectivityStatus(),
+                        'System Time'               => $systemTimeStatus,
+                        'Gateway settings message'  => $settingsMessage
+                    );
+                    $result = array_merge($result, $extendedInfo);
+                }
+            } else {
+                $result = array(
+                    'Error' => "An error occurred while trying to initialise $model model"
+                );
+            }
+        } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            $result = array(
+                'Error' => "An error occurred while trying to retrieve module information: " . $errorMessage
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * Formats the output of the module information
+     *
+     * @param array $info
+     * @return array
+     */
+    public function formatModuleInfo($info)
+    {
+        $output = Mage::app()->getRequest()->getParam('output');
+        $contentType = array_key_exists($output, $this->_contentTypes)
+            ? $this->_contentTypes[$output]
+            : self::TYPE_TEXT_PLAIN;
+
+        switch ($contentType) {
+            case self::TYPE_APPLICATION_JSON:
+                $body = json_encode($info);
+                break;
+            case self::TYPE_TEXT_PLAIN:
+            default:
+                $body = $this->convertArrayToString($info);
+                break;
+        }
+
+        return array(
+            'content-type' => $contentType,
+            'body'         => $body
+        );
+    }
+
+    /**
+     * Converts an array to string
+     *
+     * @param array  $arr An associative array.
+     * @param string $ident Identation.
+     * @return string
+     */
+    protected function convertArrayToString($arr, $ident = '')
+    {
+        $result        = '';
+        $identPattern = '  ';
+        foreach ($arr as $key => $value) {
+            if ('' !== $result) {
+                $result .= PHP_EOL;
+            }
+
+            if (is_array($value)) {
+                $value = PHP_EOL . $this->convertArrayToString($value, $ident . $identPattern);
+            }
+
+            $result .= $ident . $key . ': ' . $value;
         }
 
         return $result;

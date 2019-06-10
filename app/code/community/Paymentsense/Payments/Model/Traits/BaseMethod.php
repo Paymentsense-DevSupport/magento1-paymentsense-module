@@ -28,6 +28,7 @@ trait Paymentsense_Payments_Model_Traits_BaseMethod
 
     protected $_method = null;
     protected $_helper = null;
+    protected $_messageHelper = null;
     protected $_logger = null;
 
     /**
@@ -69,6 +70,20 @@ trait Paymentsense_Payments_Model_Traits_BaseMethod
         }
 
         return $this->_helper;
+    }
+
+    /**
+     * Gets the Diagnostic Message helper
+     *
+     * @return Paymentsense_Payments_Helper_DiagnosticMessage
+     */
+    public function getMessageHelper()
+    {
+        if (!($this->_messageHelper instanceof Paymentsense_Payments_Helper_DiagnosticMessage)) {
+            $this->_messageHelper = $this->getHelper('paymentsense/DiagnosticMessage');
+        }
+
+        return $this->_messageHelper;
     }
 
     /**

@@ -20,6 +20,7 @@
 use Paymentsense_Payments_Model_Psgw_Psgw as Psgw;
 use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultCode;
 use Paymentsense_Payments_Model_Psgw_TransactionType as TransactionType;
+use Paymentsense_Payments_Model_Psgw_HpfResponses as HpfResponses;
 
 /**
  * Abstract Card class used by the Direct and MOTO payment methods
@@ -447,5 +448,89 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
             'StatusCode' => $status,
             'Message'    => $message
         );
+    }
+
+    /**
+     * Gets the gateway settings message
+     *
+     * @param bool $textFormat Specifies whether the format of the message is text
+     *
+     * @return array
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    // phpcs:ignore Generic.Metrics.CyclomaticComplexity
+    public function getSettingsMessage($textFormat)
+    {
+        $result = array();
+        try {
+            $config = $this->getConfigHelper();
+            $merchantIdFormatValid = $this->getHelper()->isMerchantIdFormatValid($config->getMerchantId());
+        } catch (\Exception $e) {
+            $merchantIdFormatValid = false;
+        }
+
+        if (! $merchantIdFormatValid) {
+            $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                'Gateway MerchantID is invalid. '
+                . 'Please make sure the Gateway MerchantID matches the ABCDEF-1234567 format.'
+            );
+        } else {
+            $merchantCredentialsValid = null;
+            $ggepResult = $this->performGetGatewayEntryPointsTxn();
+            $trxStatusCode = $ggepResult['StatusCode'];
+            if (TransactionResultCode::SUCCESS === $trxStatusCode) {
+                $merchantCredentialsValid = true;
+            } elseif (TransactionResultCode::FAILED === $trxStatusCode) {
+                if ($this->merchantCredentialsInvalid($ggepResult['Message'])) {
+                    $merchantCredentialsValid = false;
+                }
+            }
+
+            if (true === $merchantCredentialsValid) {
+                $result = $this->getMessageHelper()->buildSuccessSettingsMessage(
+                    'Gateway MerchantID and Gateway Password are valid.'
+                );
+            } else {
+                list ($hpfHeader, $hpfResult) = $this->checkGatewaySettings();
+                switch ($hpfResult) {
+                    case HpfResponses::HPF_RESP_MID_MISSING:
+                    case HpfResponses::HPF_RESP_MID_NOT_EXISTS:
+                        $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                            'Gateway MerchantID is invalid.'
+                        );
+                        break;
+                    case HpfResponses::HPF_RESP_HASH_INVALID:
+                        if (false === $merchantCredentialsValid) {
+                            $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                                'Gateway Password is invalid.'
+                            );
+                        } else {
+                            $result = $this->getMessageHelper()->buildWarningSettingsMessage(
+                                'The gateway settings cannot be validated at this time.'
+                            );
+                        }
+                        break;
+                    case HpfResponses::HPF_DATE_TIME_EXPIRED:
+                    case HpfResponses::HPF_RESP_NO_RESPONSE:
+                        if (false === $merchantCredentialsValid) {
+                            $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                                'Gateway MerchantID or/and Gateway Password are invalid.'
+                            );
+                        } else {
+                            $result = $this->getMessageHelper()->buildWarningSettingsMessage(
+                                'The gateway settings cannot be validated at this time.'
+                            );
+                        }
+                        break;
+                }
+            }
+        }
+
+        if ($textFormat) {
+            $result = $this->getMessageHelper()->getSettingsTextMessage($result);
+        }
+
+        return $result;
     }
 }

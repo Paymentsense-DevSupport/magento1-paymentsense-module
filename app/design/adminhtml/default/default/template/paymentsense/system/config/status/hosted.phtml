@@ -22,31 +22,29 @@ try {
     $code              = $method->getCode();
     $route             = str_replace('_', '/status/', $code);
     $statusUrl         = $this->getBaseUrl() . $route;
-    $initialStatus     = $method->isEnabled() ? $this->__('Testing...') : $this->__('Disabled');
-    $initialConnection = $method->isEnabled() ? $this->__('Testing...') : $this->__('Unknown');
+    $initialStatusMsg  = $method->isEnabled() ? $this->__('Testing...') : $this->__('Disabled');
+    $initialCommonMsg  = $method->isEnabled() ? $this->__('Testing...') : $this->__('Unknown');
     ?>
   <style type="text/css" >
-    .paymentsense-status-section {
+    .paymentsense-section {
       padding: 5px;
-    }
-    .paymentsense-status-section .statusDiv {
       margin-top: 10px;
-      margin-bottom: 0;
+      margin-bottom: 10px;
     }
-    .paymentsense-status-section .connectionDiv {
-      margin-top: 0;
-      margin-bottom: 18px;
-    }
-    .paymentsense-status-section .red-text {
+    .paymentsense-section .error-text {
       font-weight: bold;
       color: #991015;
     }
-    .paymentsense-status-section .green-text {
+    .paymentsense-section .success-text {
       font-weight: bold;
       color: #147908;
     }
+    .paymentsense-section .warning-text {
+      font-weight: bold;
+      color: #333333;
+    }
   </style>
-  <div class="paymentsense-status-section">
+  <div class="paymentsense-section">
       <?php
 
       $script = '';
@@ -64,38 +62,49 @@ try {
           '" . $statusUrl . "',
           {
             method: 'GET',
-            onSuccess: showStatus,
-            onFailure: showUnknownStatus
+            onSuccess: showInfo,
+            onFailure: showUnknownInfo
           }
         );
       }
 
       /**
-       * Shows the status and connection
+       * Shows the status, connection and settings
        */
-      function showStatus(data)
+      function showInfo(data)
       {
         data = JSON.parse(data.responseText);
         if (data.statusText != null) {
           var statusSpan = document.getElementById('" . $code . "-status');
           var connectionSpan = document.getElementById('" . $code . "-connection');
+          var settingsSpan = document.getElementById('" . $code . "-settings');
+          var stimeSpan = document.getElementById('" . $code . "-stime');
           statusSpan.innerHTML = data.statusText;
           statusSpan.className = data.statusClassName;
           connectionSpan.innerHTML = data.connectionText;
           connectionSpan.className = data.connectionClassName;
+          settingsSpan.innerHTML = data.settingsText;
+          settingsSpan.className = data.settingsClassName;
+          if (data.stimeText != null) {
+            stimeSpan.innerHTML = data.stimeText;
+            stimeSpan.className = data.stimeClassName;
+            document.getElementById('" . $code . "-stime-div').style.display = \"block\";
+          }
         } else {
-          showUnknownStatus(data);
+          showUnknownInfo(data);
         }
       }
       /**
-       * Shows an unknown status and connection
+       * Shows an unknown status, connection and settings
        */
-      function showUnknownStatus()
+      function showUnknownInfo(data)
       {
         var statusSpan = document.getElementById('" . $code . "-status');
         var connectionSpan = document.getElementById('" . $code . "-connection');
+        var settingsSpan = document.getElementById('" . $code . "-settings');
         statusSpan.innerHTML = '" . $this->__('Unknown') . "';
         connectionSpan.innerHTML = '" . $this->__('Unknown') . "';
+        settingsSpan.innerHTML = '" . $this->__('Unknown') . "';
       }
     </script>
     ";
@@ -103,13 +112,21 @@ try {
 
       echo $script;
       ?>
-    <div class="statusDiv">
+    <div>
       <span><?php echo $this->__('Payment Method Status:'); ?> </span>
-      <span id="<?php echo $code; ?>-status"><?php echo $initialStatus; ?></span>
+      <span id="<?php echo $code; ?>-status"><?php echo $initialStatusMsg; ?></span>
     </div>
-    <div class="connectionDiv">
-      <span><?php echo $this->__('Gateway Connection:'); ?> </span>
-      <span id="<?php echo $code; ?>-connection"><?php echo $initialConnection; ?></span>
+    <div>
+      <span><?php echo $this->__('Connection to Gateway Servers:'); ?> </span>
+      <span id="<?php echo $code; ?>-connection"><?php echo $initialCommonMsg; ?></span>
+    </div>
+    <div>
+      <span><?php echo $this->__('Gateway Settings:'); ?> </span>
+      <span id="<?php echo $code; ?>-settings"><?php echo $initialCommonMsg; ?></span>
+    </div>
+    <div id="<?php echo $code; ?>-stime-div" style="display: none">
+      <span><?php echo $this->__('System Time:'); ?> </span>
+      <span id="<?php echo $code; ?>-stime"><?php echo $initialCommonMsg; ?></span>
     </div>
   </div>
     <?php

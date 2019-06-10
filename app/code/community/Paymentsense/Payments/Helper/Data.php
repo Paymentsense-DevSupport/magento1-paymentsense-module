@@ -110,20 +110,57 @@ class Paymentsense_Payments_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Converts an array to string
+     * Determines whether the format of the merchant ID matches the ABCDEF-1234567 format
      *
-     * @param array $arr
-     * @return string
+     * @param string $merchantId Merchant ID
+     * @return bool
      */
-    public function convertArrayToString($arr)
+    public function isMerchantIdFormatValid($merchantId)
     {
-        $result = '';
-        foreach ($arr as $key => $value) {
-            if ($result !== '') {
-                $result .= PHP_EOL;
-            }
+        return (bool) preg_match('/^[a-zA-Z]{6}-[0-9]{7}$/', $merchantId);
+    }
 
-            $result .= $key . ': ' . $value;
+    /**
+     * Retrieves the hostname from an URL
+     *
+     * @param string $url URL
+     * @return string
+     *
+     * @throws Varien_Exception
+     */
+    public function getHostname($url)
+    {
+        $modelUrl = new Mage_Core_Model_Url();
+        $modelUrl->parseUrl($url);
+        return $modelUrl->getHost();
+    }
+
+    /**
+     * Builds a pair of a local and a remote timestamp
+     *
+     * @param DateTime $remoteDateTime
+     * @return array
+     *
+     * @throws Varien_Exception
+     */
+    public function buildDateTimePair($remoteDateTime)
+    {
+        $localDateTime = DateTime::createFromFormat('Y-m-d H:i:s', Mage::getSingleton('core/date')->gmtDate());
+        return array($localDateTime, $remoteDateTime);
+    }
+
+    /**
+     * Retrieves the value of the Date field from an HTTP header
+     *
+     * @param string $header
+     * @return DateTime|false
+     */
+    public function retrieveDate($header)
+    {
+        $result = false;
+        if (preg_match('/Date: (.*)\b/', $header, $matches)) {
+            $date = strip_tags($matches[1]);
+            $result = DateTime::createFromFormat('D, d M Y H:i:s e', $date);
         }
 
         return $result;

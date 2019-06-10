@@ -21,3 +21,8 @@
 "Transaction failed. ACSURL, PaReq or CrossReference is empty.","Transaction failed. ACSURL, PaReq or CrossReference is empty."
 "Billing address is empty.","Billing address is empty."
 "Transaction type is ""%s"" not supported","Transaction type is ""%s"" not supported"
+"Payment Method Status:","Payment Method Status:"
+"Connection to Gateway Servers:","Connection to Gateway Servers:"
+"Gateway Settings:","Gateway Settings:"
+"System Time:","System Time:"
+"The system time is out of sync with the gateway with %+d seconds. Please check your system time.","The system time is out of sync with the gateway with %+d seconds. Please check your system time."

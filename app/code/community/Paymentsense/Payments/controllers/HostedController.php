@@ -25,6 +25,11 @@ use Paymentsense_Payments_Model_Psgw_TransactionStatus as TransactionStatus;
 class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_Action
 {
     /**
+     * Payment method model
+     */
+    const MODEL = 'paymentsense/hosted';
+
+    /**
      * Request Types
      */
     const REQ_NOTIFICATION      = '0';
@@ -62,8 +67,25 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
 
     protected function _construct()
     {
-        $this->_hosted = Mage::getModel('paymentsense/hosted');
+        $this->_hosted = Mage::getModel(self::MODEL);
         $this->_helper = Mage::helper('paymentsense');
+    }
+
+    /**
+     * Shows the module information report
+     *
+     * @throws Varien_Exception
+     */
+    public function infoAction()
+    {
+        $infoModel = Mage::getModel('paymentsense/info');
+        $info = $infoModel->getFormattedModuleInfo(self::MODEL);
+        $this->getResponse()
+            ->clearHeaders()
+            ->setHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store', true)
+            ->setHeader('Pragma', 'no-cache', true)
+            ->setHeader('Content-Type', $info['content-type'])
+            ->setBody($info['body']);
     }
 
     /**
@@ -72,7 +94,7 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
     public function redirectAction()
     {
         $this->_helper->getCheckoutSession()->setPaymentsenseOrderId(null);
-        if (!$this->_hosted->isOrderAvailable()) {
+        if (! $this->_hosted->isOrderAvailable()) {
             $this->executeFailureAction(
                 $this->_helper->__('Your session has expired or you have no items in your shopping cart.')
             );
@@ -131,7 +153,7 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
     public function processPostResponse()
     {
         $this->_hosted->getLogger()->info('POST Callback request from the Hosted Payment Form has been received.');
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             $this->_hosted->getLogger()->warning('Non-POST HTTP Method triggering HTTP status code 400.');
             $this->getResponse()->setHttpResponseCode(
                 Mage_Api2_Model_Server::HTTP_BAD_REQUEST
@@ -160,7 +182,7 @@ class Paymentsense_Payments_HostedController extends Mage_Core_Controller_Front_
     public function processServerNotification()
     {
         $this->_hosted->getLogger()->info('SERVER Notification from the Hosted Payment Form has been received.');
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             $this->_hosted->getLogger()->warning('Non-POST HTTP Method responding with an error to the gateway.');
             $this->setError(self::MSG_NON_POST_HTTP_METHOD);
         } else {

@@ -19,6 +19,7 @@
 
 use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultCode;
 use Paymentsense_Payments_Model_Psgw_TransactionStatus as TransactionStatus;
+use Paymentsense_Payments_Model_Psgw_HpfResponses as HpfResponses;
 
 /**
  * Paymentsense Hosted Payment Method Model
@@ -106,103 +107,6 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
         }
 
         return $result;
-    }
-
-    /**
-     * Builds the redirect form action URL and the variables for the Hosted Payment Form
-     *
-     * @return array
-     *
-     * @throws Exception
-     */
-    public function buildHostedFormData()
-    {
-        $fields = null;
-        $checkoutSession = $this->getHelper()->getCheckoutSession();
-        if (!empty($checkoutSession)) {
-            $order = $checkoutSession->getLastRealOrder();
-            if (!empty($order)) {
-                $orderId        = $order->getRealOrderId();
-                $billingAddress = $order->getBillingAddress();
-                if (!empty($orderId) && !empty($billingAddress)) {
-                    $config = $this->getConfigHelper();
-                    $iso    = $this->getIsoCodesHelper();
-                    $fields = array(
-                        'Amount'                    => $order->getBaseGrandTotal() * 100,
-                        'CurrencyCode'              => $iso->getCurrencyIsoCode($order->getOrderCurrencyCode()),
-                        'OrderID'                   => $orderId,
-                        'TransactionType'           => $config->getTransactionType(),
-                        'TransactionDateTime'       => Mage::getSingleton('core/date')->gmtDate(),
-                        'CallbackURL'               => $this->getHelper()->getHostedFormCallbackUrl(),
-                        'OrderDescription'          => $orderId . ': New order',
-                        'CustomerName'              => $billingAddress->getFirstname() . ' ' .
-                            $billingAddress->getLastname(),
-                        'Address1'                  => $billingAddress->getStreet(1),
-                        'Address2'                  => $billingAddress->getStreet(2),
-                        'Address3'                  => $billingAddress->getStreet(3),
-                        'Address4'                  => $billingAddress->getStreet(4),
-                        'City'                      => $billingAddress->getCity(),
-                        'State'                     => $billingAddress->getRegionCode(),
-                        'PostCode'                  => $billingAddress->getPostcode(),
-                        'CountryCode'               => $iso->getCountryIsoCode($billingAddress-> getCountryId()),
-                        'EmailAddress'              => $order->getCustomerEmail(),
-                        'PhoneNumber'               => $billingAddress->getTelephone(),
-                        'EmailAddressEditable'      => $config->getEmailAddressEditable(),
-                        'PhoneNumberEditable'       => $config->getPhoneNumberEditable(),
-                        'CV2Mandatory'              => 'true',
-                        'Address1Mandatory'         => $config->getAddress1Mandatory(),
-                        'CityMandatory'             => $config->getCityMandatory(),
-                        'PostCodeMandatory'         => $config->getPostcodeMandatory(),
-                        'StateMandatory'            => $config->getStateMandatory(),
-                        'CountryMandatory'          => $config->getCountryMandatory(),
-                        'ResultDeliveryMethod'      => $config->getResultDeliveryMethod(),
-                        'ServerResultURL'           => ('SERVER' === $config->getResultDeliveryMethod())
-                        ? $this->getHelper()->getHostedFormCallbackUrl()
-                        : '',
-                        'PaymentFormDisplaysResult' => 'false'
-                    );
-
-                    $fields = array_map(
-                        function ($value) {
-                            return $value === null ? '' : $value;
-                        },
-                        $fields
-                    );
-
-                    $data  = 'MerchantID=' . $config->getMerchantId();
-                    $data .= '&Password=' . $config->getPassword();
-
-                    foreach ($fields as $key => $value) {
-                        $data .= '&' . $key . '=' . $value;
-                    };
-
-                    $additionalFields = array(
-                        'HashDigest' => $this->calculateHashDigest(
-                            $data,
-                            $config->getHashMethod(),
-                            $config->getPresharedKey()
-                        ),
-                        'MerchantID' => $config->getMerchantId(),
-                    );
-
-                    $fields = array_merge($additionalFields, $fields);
-
-                    $this->getLogger()->info(
-                        'Preparing Hosted Payment Form redirect with ' . $config->getTransactionType() .
-                        ' transaction for order #' . $orderId
-                    );
-
-                    $order
-                        ->setState(
-                            Mage_Sales_Model_Order::STATE_PENDING_PAYMENT,
-                            Mage_Sales_Model_Order::STATE_PENDING_PAYMENT
-                        )
-                        ->save();
-                }
-            }
-        }
-
-        return $fields;
     }
 
     /**
@@ -354,42 +258,6 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     }
 
     /**
-     * Calculates the hash digest.
-     * Supported hash methods: MD5, SHA1, HMACMD5, HMACSHA1
-     *
-     * @param string $data Data to be hashed.
-     * @param string $hashMethod Hash method.
-     * @param string $key Secret key to use for generating the hash.
-     * @return string
-     */
-    public function calculateHashDigest($data, $hashMethod, $key)
-    {
-        $result     = '';
-        $includeKey = in_array($hashMethod, array('MD5', 'SHA1'), true);
-        if ($includeKey) {
-            $data = 'PreSharedKey=' . $key . '&' . $data;
-        }
-
-        switch ($hashMethod) {
-            case 'MD5':
-                // @codingStandardsIgnoreLine
-                $result = md5($data);
-                break;
-            case 'SHA1':
-                $result = sha1($data);
-                break;
-            case 'HMACMD5':
-                $result = hash_hmac('md5', $data, $key);
-                break;
-            case 'HMACSHA1':
-                $result = hash_hmac('sha1', $data, $key);
-                break;
-        }
-
-        return $result;
-    }
-
-    /**
      * Checks whether the hash digest received from the payment gateway is valid
      *
      * @param string $requestType Type of the request (notification or customer redirect)
@@ -399,7 +267,7 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     public function isHashDigestValid($requestType, $data)
     {
         $result = false;
-        $dataString   = $this->buildDataString($requestType, $data);
+        $dataString = $this->buildDataString($requestType, $data);
         if ($dataString) {
             $config = $this->getConfigHelper();
             $hashDigestReceived   = $data['HashDigest'];
@@ -462,6 +330,100 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
             foreach ($fields[$requestType] as $field) {
                 $result .= '&' . $field . '=' . str_replace('&amp;', '&', $data[$field]);
             }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Gets the gateway settings message
+     *
+     * @param bool $textFormat Specifies whether the format of the message is text
+     *
+     * @return array
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    // phpcs:ignore Generic.Metrics.CyclomaticComplexity
+    public function getSettingsMessage($textFormat)
+    {
+        $result = array();
+        try {
+            $config = $this->getConfigHelper();
+            $merchantIdFormatValid = $this->getHelper()->isMerchantIdFormatValid($config->getMerchantId());
+        } catch (\Exception $e) {
+            $merchantIdFormatValid = false;
+        }
+
+        if (! $merchantIdFormatValid) {
+            $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                'Gateway MerchantID is invalid. '
+                . 'Please make sure the Gateway MerchantID matches the ABCDEF-1234567 format.'
+            );
+        } else {
+            $ggepResult = $this->performGetGatewayEntryPointsTxn();
+
+            list($hpfHeader, $hpfResult) = $this->checkGatewaySettings();
+
+            $merchantCredentialsValid = null;
+            $trxStatusCode = $ggepResult['StatusCode'];
+            if (TransactionResultCode::SUCCESS === $trxStatusCode) {
+                $merchantCredentialsValid = true;
+            } elseif (TransactionResultCode::FAILED === $trxStatusCode) {
+                if ($this->merchantCredentialsInvalid($ggepResult['Message'])) {
+                    $merchantCredentialsValid = false;
+                }
+            }
+
+            switch ($hpfResult) {
+                case HpfResponses::HPF_RESP_OK:
+                    $result = $this->getMessageHelper()->buildSuccessSettingsMessage(
+                        'Gateway MerchantID, Gateway Password, '
+                        . 'Gateway PreSharedKey and Gateway Hash Method are valid.'
+                    );
+                    break;
+                case HpfResponses::HPF_RESP_MID_MISSING:
+                case HpfResponses::HPF_RESP_MID_NOT_EXISTS:
+                    $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                        'Gateway MerchantID is invalid.'
+                    );
+                    break;
+                case HpfResponses::HPF_RESP_HASH_INVALID:
+                    if (true === $merchantCredentialsValid) {
+                        $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                            'Gateway PreSharedKey or/and Gateway Hash Method are invalid.'
+                        );
+                    } elseif (false === $merchantCredentialsValid) {
+                        $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                            'Gateway Password is invalid.'
+                        );
+                    } else {
+                        $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                            'Gateway Password, Gateway PreSharedKey or/and Gateway Hash Method are invalid.'
+                        );
+                    }
+                    break;
+                case HpfResponses::HPF_DATE_TIME_EXPIRED:
+                case HpfResponses::HPF_RESP_NO_RESPONSE:
+                    if (true === $merchantCredentialsValid) {
+                        $result = $this->getMessageHelper()->buildWarningSettingsMessage(
+                            'Gateway PreSharedKey and Gateway Hash Method cannot be validated at this time.'
+                        );
+                    } elseif (false === $merchantCredentialsValid) {
+                        $result = $this->getMessageHelper()->buildErrorSettingsMessage(
+                            'Gateway MerchantID or/and Gateway Password are invalid.'
+                        );
+                    } else {
+                        $result = $this->getMessageHelper()->buildWarningSettingsMessage(
+                            'The gateway settings cannot be validated at this time.'
+                        );
+                    }
+                    break;
+            }
+        }
+
+        if ($textFormat) {
+            $result = $this->getMessageHelper()->getSettingsTextMessage($result);
         }
 
         return $result;

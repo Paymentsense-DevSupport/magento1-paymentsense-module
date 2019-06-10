@@ -244,6 +244,7 @@ class Paymentsense_Payments_Model_Psgw_Psgw
         $trxAttempt           = 0;
         $validResponse        = false;
         $trxAttemptsExhausted = false;
+        $responseHeaders      = array();
 
         // Initial message. Will be replaced by the gateway message upon valid response.
         $trxMessage = 'The communication with the Payment Gateway failed. Check outbound connection.';
@@ -252,7 +253,7 @@ class Paymentsense_Payments_Model_Psgw_Psgw
         $trxDetail         = false;
         $trxCrossReference = false;
         $responseBody      = '';
-        while (!$validResponse && !$trxAttemptsExhausted) {
+        while (! $validResponse && ! $trxAttemptsExhausted) {
             $trxAttempt++;
             if ($trxAttempt > $this->trxMaxAttempts) {
                 $trxAttempt = 1;
@@ -268,12 +269,15 @@ class Paymentsense_Payments_Model_Psgw_Psgw
                     'xml'     => $xml
                 );
 
-                $responseBody = $this->executeHttpRequest($data);
-                if (!empty($responseBody)) {
+                $response = $this->executeHttpRequest($data);
+                if (is_array($response)) {
+                    list($responseHeader, $responseBody) = $response;
+                    $responseHeaders[$url] = $responseHeader;
+
                     $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
                     if (is_numeric($trxStatusCode)) {
                         $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
-                        $validResponse = !$this->shouldRetryTxn($trxStatusCode, $trxMessage);
+                        $validResponse = ! $this->shouldRetryTxn($trxStatusCode, $trxMessage);
                     }
                 }
             } else {
@@ -299,12 +303,13 @@ class Paymentsense_Payments_Model_Psgw_Psgw
         }
 
         $result = array(
-            'StatusCode'     => $trxStatusCode,
-            'Message'        => $trxMessage,
-            'Detail'         => $trxDetail,
-            'CrossReference' => $trxCrossReference,
-            'ACSURL'         => $this->getXmlValue('ACSURL', $responseBody, '.+'),
-            'PaReq'          => $this->getXmlValue('PaReq', $responseBody, '.+')
+            'StatusCode'      => $trxStatusCode,
+            'Message'         => $trxMessage,
+            'Detail'          => $trxDetail,
+            'CrossReference'  => $trxCrossReference,
+            'ACSURL'          => $this->getXmlValue('ACSURL', $responseBody, '.+'),
+            'PaReq'           => $this->getXmlValue('PaReq', $responseBody, '.+'),
+            'ResponseHeaders' => $responseHeaders
         );
 
         return $result;
@@ -328,7 +333,7 @@ class Paymentsense_Payments_Model_Psgw_Psgw
      * Performs HTTP requests by using Zend Http Client
      *
      * @param array $data Data
-     * @return string|false
+     * @return array|false
      */
     public function executeHttpRequest($data)
     {
@@ -336,15 +341,19 @@ class Paymentsense_Payments_Model_Psgw_Psgw
         $curl = new Varien_Http_Adapter_Curl();
         $curl->setConfig(
             array(
-                'timeout' => 10
+                'timeout' => 15
             )
         );
 
         $curl->write($data['method'], $data['url'], Zend_Http_Client::HTTP_1, $data['headers'], $data['xml']);
+
         $data = $curl->read();
         if ($data !== false) {
-            $data   = preg_split('/^\r?$/m', $data, 2);
-            $result = trim($data[1]);
+            $data = preg_split('/^\r?$/m', $data, 2);
+            $result = array(
+                trim($data[0]),
+                trim($data[1])
+            );
         }
 
         $curl->close();

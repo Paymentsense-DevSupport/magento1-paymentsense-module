@@ -49,7 +49,12 @@ class Paymentsense_Payments_Block_Redirect_Hosted extends Mage_Core_Block_Templa
         $submitButton->setId($this->getButtonId());
         $form->addElement($submitButton);
         $hosted = Mage::getModel('paymentsense/hosted');
-        $data = $hosted->buildHostedFormData();
+        $checkoutSession = $hosted->getHelper()->getCheckoutSession();
+        $order = $checkoutSession
+            ? $checkoutSession->getLastRealOrder()
+            : false;
+
+        $data = $hosted->buildHpfFields($order);
         if ($data) {
             foreach ($data as $name => $value) {
                 $element = new Varien_Data_Form_Element_Hidden(

@@ -35,7 +35,7 @@ Configuration
 
 1. Login to the Magento Admin Panel
 2. Go to **System** -> **Configuration** -> **Sales** -> **Payment Methods**
-3. Click the **Expand** button next to the payment methods **Paymentsense Hosted**, 
+3. Click the **Expand** button next to the payment methods **Paymentsense Hosted**,
   **Paymentsense Direct** or/and **Paymentsense MOTO** to expand the configuration settings
 4. Set **Enabled** to **Yes**
 5. Set the gateway credentials and pre-shared key where applicable
@@ -50,15 +50,25 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 
 1. Make sure SSL/TLS is configured on your PCI-DSS certified server
 2. Login to the Magento Admin Panel
-3. Go to **System** -> **Configuration** -> **General** -> **Web** 
-4. Expand the **Secure** section 
+3. Go to **System** -> **Configuration** -> **General** -> **Web**
+4. Expand the **Secure** section
 5. Set **Use Secure URLs in Frontend** and **Use Secure URLs in Admin** to **Yes**
-6. Set your **Base URL** 
+6. Set your **Base URL**
 7. Click the **Save Config** button
 
 
 Changelog
 ---------
+
+### 1.9.4 (1.9.4001)
+##### Added
+- Gateway settings check
+- System time check
+
+##### Changed:
+- URL of the extended module information feature
+- Output of the extended module information feature
+
 
 ### 1.9.3 (1.9.3001)
 ##### Added
