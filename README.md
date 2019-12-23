@@ -60,6 +60,11 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 1.9.5 (1.9.5001)
+##### Added
+- Support of all currencies as per the ISO 4217
+
+
 ### 1.9.4 (1.9.4001)
 ##### Added
 - Gateway settings check

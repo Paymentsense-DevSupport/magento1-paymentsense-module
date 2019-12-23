@@ -23,7 +23,7 @@ use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultC
 use Paymentsense_Payments_Model_Psgw_HpfResponses as HpfResponses;
 
 /**
- * Trait for processing of Cross Reference Transactions
+ * Trait for processing of transactions
  */
 trait Paymentsense_Payments_Model_Traits_Transactions
 {

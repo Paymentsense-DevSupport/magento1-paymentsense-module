@@ -41,7 +41,7 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
     protected $_canSaveCc               = false;
 
     /**
-     * Checks if the payment method is available
+     * Checks whether the payment method is available
      *
      * @param Mage_Sales_Model_Quote|null $quote
      * @return bool
@@ -135,7 +135,7 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
                 $action = Mage_Payment_Model_Method_Abstract::ACTION_AUTHORIZE_CAPTURE;
                 break;
             default:
-                $message = sprintf($this->getHelper()->__('Transaction type is "%s" not supported', $transactionType));
+                $message = __('Error: Transaction type "%s" is not supported', $transactionType);
                 $this->getLogger()->error($message);
                 Mage::throwException($message);
         }

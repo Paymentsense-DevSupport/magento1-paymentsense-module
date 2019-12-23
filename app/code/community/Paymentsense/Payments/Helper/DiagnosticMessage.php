@@ -198,11 +198,9 @@ class Paymentsense_Payments_Helper_DiagnosticMessage extends Mage_Core_Helper_Ab
     public function buildErrorSystemTimeMessage($text)
     {
         return $this->buildMessage(
-            sprintf(
-                $this->__(
-                    'The system time is out of sync with the gateway with %+d seconds. Please check your system time.',
-                    $text
-                )
+            $this->__(
+                'The system time is out of sync with the gateway with %+d seconds. Please check your system time.',
+                $text
             ),
             self::ERROR_CLASS_NAME,
             self::MESSAGE_TYPE_SYSTEM_TIME

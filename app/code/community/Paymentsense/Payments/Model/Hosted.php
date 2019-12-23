@@ -78,7 +78,7 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     }
 
     /**
-     * Checks if the payment method is available
+     * Checks whether the payment method is available
      *
      * @param Mage_Sales_Model_Quote|null $quote
      * @return bool
