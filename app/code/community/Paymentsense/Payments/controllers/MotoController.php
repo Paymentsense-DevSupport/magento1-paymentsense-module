@@ -29,13 +29,26 @@ class Paymentsense_Payments_MotoController extends Mage_Core_Controller_Front_Ac
 
     /**
      * Shows the module information report
-     *
-     * @throws Varien_Exception
      */
     public function infoAction()
     {
         $infoModel = Mage::getModel('paymentsense/info');
         $info = $infoModel->getFormattedModuleInfo(self::MODEL);
+        $this->getResponse()
+            ->clearHeaders()
+            ->setHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store', true)
+            ->setHeader('Pragma', 'no-cache', true)
+            ->setHeader('Content-Type', $info['content-type'])
+            ->setBody($info['body']);
+    }
+
+    /**
+     * Shows file checksums
+     */
+    public function checksumsAction()
+    {
+        $checksumsModel = Mage::getModel('paymentsense/checksums');
+        $info = $checksumsModel->getFormattedChecksumsInfo();
         $this->getResponse()
             ->clearHeaders()
             ->setHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store', true)

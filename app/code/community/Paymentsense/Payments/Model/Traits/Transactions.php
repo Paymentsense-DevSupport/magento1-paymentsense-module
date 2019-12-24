@@ -537,8 +537,6 @@ trait Paymentsense_Payments_Model_Traits_Transactions
      *
      * @param  Mage_Sales_Model_Order $order
      * @return array|false
-     *
-     * @throws Varien_Exception
      */
     public function buildPaymentFields($order)
     {
@@ -591,8 +589,6 @@ trait Paymentsense_Payments_Model_Traits_Transactions
      * Builds the redirect form action URL and the variables for the Hosted Payment Form
      *
      * @return array
-     *
-     * @throws Varien_Exception
      */
     public function buildSamplePaymentFields()
     {
@@ -675,7 +671,7 @@ trait Paymentsense_Payments_Model_Traits_Transactions
 
     /**
      * Calculates the hash digest.
-     * Supported hash methods: MD5, SHA1, HMACMD5, HMACSHA1
+     * Supported hash methods: SHA1, HMACMD5, HMACSHA1
      *
      * @param string $data Data to be hashed.
      * @param string $hashMethod Hash method.
@@ -685,15 +681,14 @@ trait Paymentsense_Payments_Model_Traits_Transactions
     public function calculateHashDigest($data, $hashMethod, $key)
     {
         $result     = '';
-        $includeKey = in_array($hashMethod, array('MD5', 'SHA1'), true);
+        $includeKey = $hashMethod == 'SHA1';
         if ($includeKey) {
             $data = 'PreSharedKey=' . $key . '&' . $data;
         }
 
         switch ($hashMethod) {
             case 'MD5':
-                // @codingStandardsIgnoreLine
-                $result = md5($data);
+                // No longer supported. The use of the md5 function is forbidden by Magento.
                 break;
             case 'SHA1':
                 $result = sha1($data);

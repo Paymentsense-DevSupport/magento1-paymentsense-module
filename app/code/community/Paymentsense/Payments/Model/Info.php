@@ -23,21 +23,8 @@ use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultC
 /**
  * Paymentsense Info Model
  */
-class Paymentsense_Payments_Model_Info
+class Paymentsense_Payments_Model_Info extends Paymentsense_Payments_Model_Report
 {
-    const TYPE_APPLICATION_JSON = 'application/json';
-    const TYPE_TEXT_PLAIN       = 'text/plain';
-
-    /**
-     * Supported content types of the output of the module information
-     *
-     * @var array
-     */
-    protected $_contentTypes = array(
-        'json' => self::TYPE_APPLICATION_JSON,
-        'text' => self::TYPE_TEXT_PLAIN
-    );
-
     /**
      * @var Paymentsense_Payments_Model_Hosted|Paymentsense_Payments_Model_Direct|Paymentsense_Payments_Model_Moto
      */
@@ -153,7 +140,7 @@ class Paymentsense_Payments_Model_Info
             } else {
                 $result = 'Unsuccessful';
             }
-        } catch (\Varien_Exception $e) {
+        } catch (\Exception $e) {
             $errorMsg = $e->getMessage();
             $result   = 'An error occurred while performing GetGatewayEntryPoints transaction: ' . $errorMsg;
         }
@@ -170,7 +157,7 @@ class Paymentsense_Payments_Model_Info
     public function getFormattedModuleInfo($model)
     {
         $info = $this->getModuleInfo($model);
-        return $this->formatModuleInfo($info);
+        return $this->formatOutput($info);
     }
 
     /**
@@ -212,61 +199,6 @@ class Paymentsense_Payments_Model_Info
             $result = array(
                 'Error' => "An error occurred while trying to retrieve module information: " . $errorMessage
             );
-        }
-
-        return $result;
-    }
-
-    /**
-     * Formats the output of the module information
-     *
-     * @param array $info
-     * @return array
-     */
-    public function formatModuleInfo($info)
-    {
-        $output = Mage::app()->getRequest()->getParam('output');
-        $contentType = array_key_exists($output, $this->_contentTypes)
-            ? $this->_contentTypes[$output]
-            : self::TYPE_TEXT_PLAIN;
-
-        switch ($contentType) {
-            case self::TYPE_APPLICATION_JSON:
-                $body = json_encode($info);
-                break;
-            case self::TYPE_TEXT_PLAIN:
-            default:
-                $body = $this->convertArrayToString($info);
-                break;
-        }
-
-        return array(
-            'content-type' => $contentType,
-            'body'         => $body
-        );
-    }
-
-    /**
-     * Converts an array to string
-     *
-     * @param array  $arr An associative array.
-     * @param string $ident Identation.
-     * @return string
-     */
-    protected function convertArrayToString($arr, $ident = '')
-    {
-        $result        = '';
-        $identPattern = '  ';
-        foreach ($arr as $key => $value) {
-            if ('' !== $result) {
-                $result .= PHP_EOL;
-            }
-
-            if (is_array($value)) {
-                $value = PHP_EOL . $this->convertArrayToString($value, $ident . $identPattern);
-            }
-
-            $result .= $ident . $key . ': ' . $value;
         }
 
         return $result;

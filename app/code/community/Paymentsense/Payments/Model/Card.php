@@ -161,6 +161,7 @@ abstract class Paymentsense_Payments_Model_Card extends Mage_Payment_Model_Metho
         if ($this->_canUseCheckout) {
             $order->setCanSendNewEmailFlag(false);
         }
+
         $orderId = $order->getIncrementId();
         $this->getLogger()->info('Preparing PREAUTH transaction for order #' . $orderId);
         return $this->processInitialTransaction($payment, $amount);

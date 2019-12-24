@@ -31,7 +31,6 @@ class Paymentsense_Payments_Model_Admin_Options_Hash_Method
     {
         return array(
             array('value' => 'SHA1', 'label' => 'SHA1'),
-            array('value' => 'MD5', 'label' => 'MD5'),
             array('value' => 'HMACSHA1', 'label' => 'HMACSHA1'),
             array('value' => 'HMACMD5', 'label' => 'HMACMD5')
         );

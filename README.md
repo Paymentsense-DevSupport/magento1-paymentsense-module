@@ -60,6 +60,14 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 1.9.6 (1.9.6001)
+##### Added
+- File checksums to the module information feature
+
+##### Removed
+- MD5 hash method (Paymentsense Hosted)
+
+
 ### 1.9.5 (1.9.5001)
 ##### Added
 - Support of all currencies as per the ISO 4217

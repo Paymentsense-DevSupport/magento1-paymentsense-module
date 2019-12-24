@@ -248,7 +248,7 @@ class Paymentsense_Payments_Helper_DiagnosticMessage extends Mage_Core_Helper_Ab
      * @param  string $messageType
      * @return array
      */
-    private function buildMessage($text, $className, $messageType)
+    protected function buildMessage($text, $className, $messageType)
     {
         return array(
             $messageType . 'Text'      => $text,

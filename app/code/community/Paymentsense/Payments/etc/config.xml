@@ -19,7 +19,7 @@ GNU General Public License for more details.
 <config>
     <modules>
        <Paymentsense_Payments>
-         <version>1.9.5001</version>
+         <version>1.9.6001</version>
        </Paymentsense_Payments>
     </modules>
     <global>

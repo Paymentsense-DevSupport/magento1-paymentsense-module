@@ -26,9 +26,9 @@ use Paymentsense_Payments_Model_Psgw_TransactionResultCode as TransactionResultC
 class Paymentsense_Payments_Model_Psgw_Psgw
 {
     /**
-     * @var int $trxMaxAttempts Number of attempts to perform a transaction
+     * @var int $_trxMaxAttempts Number of attempts to perform a transaction
      */
-    protected $trxMaxAttempts = 3;
+    protected $_trxMaxAttempts = 3;
 
     /**
      * Sets the number of attempts to perform a transaction
@@ -37,7 +37,7 @@ class Paymentsense_Payments_Model_Psgw_Psgw
      */
     public function setTrxMaxAttempts($trxMaxAttempts)
     {
-        $this->trxMaxAttempts = $trxMaxAttempts;
+        $this->_trxMaxAttempts = $trxMaxAttempts;
     }
 
     /**
@@ -255,7 +255,7 @@ class Paymentsense_Payments_Model_Psgw_Psgw
         $responseBody      = '';
         while (! $validResponse && ! $trxAttemptsExhausted) {
             $trxAttempt++;
-            if ($trxAttempt > $this->trxMaxAttempts) {
+            if ($trxAttempt > $this->_trxMaxAttempts) {
                 $trxAttempt = 1;
                 $gatewayId++;
             }

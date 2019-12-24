@@ -62,7 +62,8 @@ class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
      */
     public function getModuleInstalledVersion()
     {
-        return Mage::getConfig()->getNode('modules/Paymentsense_Payments/version');
+        $version = Mage::getConfig()->getNode('modules/Paymentsense_Payments/version');
+        return (string) $version;
     }
 
     /**
@@ -144,15 +145,15 @@ class Paymentsense_Payments_Helper_Config extends Mage_Core_Helper_Abstract
      */
     public function isMethodConfigured()
     {
-	    $merchantId      = $this->getMerchantId();
-	    $password        = $this->getPassword();
-	    $transactionType = $this->getTransactionType();
-	    $presharedKey    = $this->getPresharedKey();
+        $merchantId      = $this->getMerchantId();
+        $password        = $this->getPassword();
+        $transactionType = $this->getTransactionType();
+        $presharedKey    = $this->getPresharedKey();
 
-	    $result = !empty($merchantId) &&
-		    !empty($password) &&
-		    !empty($transactionType) &&
-		    ($this->_method instanceof Paymentsense_Payments_Model_Card || !empty($presharedKey));
+        $result = !empty($merchantId) &&
+            !empty($password) &&
+            !empty($transactionType) &&
+            ($this->_method instanceof Paymentsense_Payments_Model_Card || !empty($presharedKey));
 
         if (! $result) {
             $this->_method->getLogger()->info('Payment method is not configured.');

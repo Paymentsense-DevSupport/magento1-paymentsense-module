@@ -125,8 +125,6 @@ class Paymentsense_Payments_Helper_Data extends Mage_Core_Helper_Abstract
      *
      * @param string $url URL
      * @return string
-     *
-     * @throws Varien_Exception
      */
     public function getHostname($url)
     {
@@ -140,8 +138,6 @@ class Paymentsense_Payments_Helper_Data extends Mage_Core_Helper_Abstract
      *
      * @param DateTime $remoteDateTime
      * @return array
-     *
-     * @throws Varien_Exception
      */
     public function buildDateTimePair($remoteDateTime)
     {

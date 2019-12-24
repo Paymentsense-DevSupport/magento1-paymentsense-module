@@ -70,7 +70,7 @@ class Paymentsense_Payments_Model_Hosted extends Mage_Payment_Model_Method_Abstr
     {
         $this->getLogger()->info('ACTION_ORDER has been triggered.');
         $order = $payment->getOrder();
-	    $order->setCanSendNewEmailFlag(false);
+        $order->setCanSendNewEmailFlag(false);
         $orderId = $order->getRealOrderId();
         $this->getLogger()->info('New order #' . $orderId . ' with amount ' . $amount . ' has been created.');
         $this->getHelper()->getCheckoutSession()->setPaymentsenseOrderId($orderId);
