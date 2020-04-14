@@ -60,6 +60,13 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 1.9.7 (1.9.7001)
+##### Added
+- HMACSHA256 and HMACSHA512 hash methods (Paymentsense Hosted)
+- Filter for characters not supported by the gateway
+- Length restriction of fields sent to the gateway
+
+
 ### 1.9.6 (1.9.6001)
 ##### Added
 - File checksums to the module information feature

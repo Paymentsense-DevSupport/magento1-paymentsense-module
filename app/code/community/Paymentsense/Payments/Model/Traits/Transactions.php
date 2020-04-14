@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -487,10 +487,12 @@ trait Paymentsense_Payments_Model_Traits_Transactions
         $fields = $order ? $this->buildPaymentFields($order) : $this->buildSamplePaymentFields();
         $fields = array_map(
             function ($value) {
-                return $value === null ? '' : $value;
+                return $value === null ? '' : $this->filterUnsupportedChars($value);
             },
             $fields
         );
+
+        $fields = $this->applyLengthRestrictions($fields);
 
         $data  = 'MerchantID=' . $config->getMerchantId();
         $data .= '&Password=' . $config->getPassword();
@@ -671,7 +673,7 @@ trait Paymentsense_Payments_Model_Traits_Transactions
 
     /**
      * Calculates the hash digest.
-     * Supported hash methods: SHA1, HMACMD5, HMACSHA1
+     * Supported hash methods: SHA1, HMACMD5, HMACSHA1, HMACSHA256 and HMACSHA512
      *
      * @param string $data Data to be hashed.
      * @param string $hashMethod Hash method.
@@ -698,6 +700,12 @@ trait Paymentsense_Payments_Model_Traits_Transactions
                 break;
             case 'HMACSHA1':
                 $result = hash_hmac('sha1', $data, $key);
+                break;
+            case 'HMACSHA256':
+                $result = hash_hmac('sha256', $data, $key);
+                break;
+            case 'HMACSHA512':
+                $result = hash_hmac('sha512', $data, $key);
                 break;
         }
 
@@ -782,5 +790,86 @@ trait Paymentsense_Payments_Model_Traits_Transactions
     public function getSystemTimeThreshold()
     {
         return $this->_systemTimeThreshold;
+    }
+
+    /**
+     * Converts HTML entities to their corresponding characters and replaces the chars that are not supported
+     * by the gateway with supported ones
+     *
+     * @param string $data A value of a variable sent to the Hosted Payment Form.
+     * @param bool   $replaceAmpersand Flag for replacing the "ampersand" (&) character.
+     * @return string
+     */
+    public function filterUnsupportedChars($data, $replaceAmpersand = false)
+    {
+        $data = $this->htmlDecode($data);
+        if ($replaceAmpersand) {
+            $data = $this->replaceAmpersand($data);
+        }
+
+        $data = $this->htmlDecode($data);
+        return str_replace(
+            array('"', '\'', '\\', '<', '>', '[', ']'),
+            array('`', '`',  '/',  '(', ')', '(', ')'),
+            $data
+        );
+    }
+
+    /**
+     * Converts HTML entities to their corresponding characters
+     *
+     * @param string $data A value of a variable sent to the Hosted Payment Form.
+     * @return string
+     */
+    public function htmlDecode($data)
+    {
+        return str_replace(
+            array('&quot;', '&apos;', '&#039;', '&amp;'),
+            array('"',      '\'',    '\'',      '&'),
+            $data
+        );
+    }
+
+    /**
+     * Replaces the "ampersand" (&) character with the "at" character (@).
+     * Required for Paymentsense Direct.
+     *
+     * @param string $data A value of a variable sent to the Hosted Payment Form.
+     * @return string
+     */
+    public function replaceAmpersand($data)
+    {
+        return str_replace('&', '@', $data);
+    }
+
+    /**
+     * Applies the gateway's restrictions on the length of selected alphanumeric fields sent to the HPF
+     *
+     * @param array $data The variables sent to the Hosted Payment Form.
+     * @return array
+     */
+    public function applyLengthRestrictions($data)
+    {
+        $result = array();
+        $mexLengths = array(
+            'OrderDescription' => 256,
+            'CustomerName'     => 100,
+            'Address1'         => 100,
+            'Address2'         => 50,
+            'Address3'         => 50,
+            'Address4'         => 50,
+            'City'             => 50,
+            'State'            => 50,
+            'PostCode'         => 50,
+            'EmailAddress'     => 100,
+            'PhoneNumber'      => 30
+        );
+        foreach ($data as $key => $value) {
+            $result[$key] = array_key_exists($key, $mexLengths)
+                ? substr($value, 0, $mexLengths[$key])
+                : $value;
+        }
+
+        return $result;
     }
 }
