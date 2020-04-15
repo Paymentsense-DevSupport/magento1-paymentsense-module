@@ -60,6 +60,11 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 1.9.8 (1.9.8001)
+##### Fixed
+- ErrorSettingsMessages as "settings" type
+
+
 ### 1.9.7 (1.9.7001)
 ##### Added
 - HMACSHA256 and HMACSHA512 hash methods (Paymentsense Hosted)

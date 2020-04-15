@@ -186,7 +186,7 @@ class Paymentsense_Payments_Helper_DiagnosticMessage extends Mage_Core_Helper_Ab
      */
     public function buildErrorSettingsMessage($text)
     {
-        return $this->buildMessage($this->__($text), self::ERROR_CLASS_NAME, self::MESSAGE_TYPE_SYSTEM_TIME);
+        return $this->buildMessage($this->__($text), self::ERROR_CLASS_NAME, self::MESSAGE_TYPE_SETTINGS);
     }
 
     /**
